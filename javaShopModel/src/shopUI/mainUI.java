@@ -13,9 +13,11 @@ public class mainUI {
     
     public static void main(String args[]) {
      
-        FormStart f1 = new FormStart();
+        //FormStart f1 = new FormStart();
         
-        java.awt.EventQueue.invokeLater(f1);
+        //java.awt.EventQueue.invokeLater(f1);
+        
+        
     }
     
 }
