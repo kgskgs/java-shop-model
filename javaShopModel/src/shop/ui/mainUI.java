@@ -7,9 +7,12 @@ package shop.ui;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import shop.db.ConnectionFactory;
+import shop.db.DatabaseDispatch;
 
 /**
  *
@@ -18,19 +21,30 @@ import shop.db.ConnectionFactory;
 public class mainUI {
     
     public static void main(String args[]) {
-     
-        FormStart f1 = new FormStart();
         
-        java.awt.EventQueue.invokeLater(f1);
+        BlockingQueue<String> queryStrQueueMaster = new LinkedBlockingQueue<String>();
+     
+
         
         try {
             Connection con = ConnectionFactory.getConnection("jdbctest","javaShopModel","javaShopModel","3306");
             
+                    
+            DatabaseDispatch dbd = new DatabaseDispatch(con, queryStrQueueMaster);
+            
+            dbd.start();
+
+            FormStart f1 = new FormStart(queryStrQueueMaster,dbd);
+
+            java.awt.EventQueue.invokeLater(f1);
+
+            System.out.println(Thread.currentThread().getName());
+            
             f1.log("connected to DB");
         } catch (ClassNotFoundException ex) {
-            f1.log(ex.toString());
+            ex.printStackTrace();
         } catch (SQLException ex) {
-            f1.log(ex.toString());
+            ex.printStackTrace();
         }
         
         
