@@ -16,22 +16,31 @@ import java.util.Properties;
  * @author Lyuboslav
  */
 public class ConnectionFactory {
-    public static Connection getConnection() {		
-		Connection con = null;
-		try {
-			
-			// load the Driver Class
-			Class.forName("shopUI.mainUI");
+    public static Connection getConnection(String dbName, String dbUser, String dbPass, String nPort) throws ClassNotFoundException, SQLException {		
+        Connection con = null;
+        		
+        //load the Driver Class
+        //include ConnectorJ jar in Libraries
+        Class.forName("com.mysql.cj.jdbc.Driver");
+                
+        String conUrl = String.format("jdbc:mysql://localhost:%s/%s?"   //database url + port
+                + "verifyServerCertificate=false&useSSL=true&rewriteBatchedStatements=true", //connection options
+                nPort, dbName);
 
-			// create the connection now
-			con = DriverManager.getConnection("jdbc:mysql://localhost:3306/UserDB?rewriteBatchedStatements=true",
-					"root",
-					"javaShopModel");
-		}catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-		return con;
-	}
+        // create the connection now
+        con = DriverManager.getConnection(conUrl,dbUser,dbPass);
+        
+	return con;
+    }
 }
+
+
+/*
+}catch (ClassNotFoundException e) {
+            //connector library missing
+            e.printStackTrace();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }    
+    
+*/
