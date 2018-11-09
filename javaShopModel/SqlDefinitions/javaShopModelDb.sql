@@ -32,9 +32,11 @@ CREATE TABLE invoices
 
 CREATE TABLE employees
 (
-    employeeId  INT unsigned NOT NULL AUTO_INCREMENT,
+    employeeId  VARCHAR(32), /*same as mysql username*/ 
     firstname   VARCHAR(150) NOT NULL,
     lastname    VARCHAR(150) NOT NULL,
+    accessLvl   TINYINT(1) unsigned NOT NULL,
+    active      TINYINT(1) unsigned NOT NULL, /*we can't drop people who are not working anymore*/ 
     shopId      INT unsigned NOT NULL,
     PRIMARY KEY (employeeId),
     FOREIGN KEY (shopId) REFERENCES shops(shopId)
@@ -62,7 +64,7 @@ CREATE TABLE receipts
     receiptId       INT unsigned NOT NULL AUTO_INCREMENT, 
     invoice         INT NULL, 
     invoiceId       INT unsigned,
-    employeeId      INT unsigned NOT NULL,
+    employeeId      VARCHAR(32),
     buyDate         TIMESTAMP NOT NULL,
     PRIMARY KEY     (receiptId),
     FOREIGN KEY     (invoiceId)  REFERENCES invoices(invoiceId),
