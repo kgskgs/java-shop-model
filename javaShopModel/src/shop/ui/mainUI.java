@@ -4,15 +4,11 @@
  * and open the template in the editor.
  */
 package shop.ui;
-
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import shop.db.ConnectionFactory;
-import shop.db.DatabaseDispatch;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 
 /**
  *
@@ -21,34 +17,18 @@ import shop.db.DatabaseDispatch;
 public class mainUI {
     
     public static void main(String args[]) {
+       
+       //set swing look & feel
+       try {  
+        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+       } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
+        System.out.print(ex.getMessage());
+       }
+       
         
-        BlockingQueue<String> queryStrQueueMaster = new LinkedBlockingQueue<String>();
-     
-
-        
-        try {
-            Connection con = ConnectionFactory.getConnection("jdbctest","javaShopModel","javaShopModel","3306");
-            
-                    
-            DatabaseDispatch dbd = new DatabaseDispatch(con, queryStrQueueMaster);
-            
-            dbd.start();
-
-            FormStart f1 = new FormStart(queryStrQueueMaster,dbd);
-
-            java.awt.EventQueue.invokeLater(f1);
-
-            System.out.println(Thread.currentThread().getName());
-            
-            f1.log("connected to DB");
-        } catch (ClassNotFoundException ex) {
-            ex.printStackTrace();
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        }
-        
-        
-        
+       FormStart f1 = new FormStart();
+       SwingUtilities.invokeLater(f1);
+    
     }
     
 }

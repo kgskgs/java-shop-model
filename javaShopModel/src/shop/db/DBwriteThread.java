@@ -16,7 +16,7 @@ import java.util.logging.Logger;
  *
  * @author K1
  */
-public class DatabaseDispatch extends Thread {
+public class DBwriteThread extends Thread {
     
     //connection to database
     private Connection con;
@@ -31,7 +31,7 @@ public class DatabaseDispatch extends Thread {
     
     private final BlockingQueue<String> queryStrQueue;
     
-    public DatabaseDispatch(Connection con, BlockingQueue<String> q) throws SQLException{
+    public DBwriteThread(Connection con, BlockingQueue<String> q) throws SQLException{
         this.forceCommit = false;
         this.con = con;
         this.queryC = 0;
@@ -72,13 +72,12 @@ public class DatabaseDispatch extends Thread {
     }
     
     public void forceCommit(){
-        
         try {
-            System.out.println("force commit");
+            System.out.println(Thread.currentThread().getName() + " force commit");
             state.executeBatch();
             queryC = 0;
         } catch (SQLException ex) {
-            Logger.getLogger(DatabaseDispatch.class.getName()).log(Level.SEVERE, null, ex);
+             ex.printStackTrace();
         }
          
     }

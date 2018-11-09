@@ -5,13 +5,18 @@
  */
 package shop.ui;
 
+import java.io.PrintStream;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.text.*;
-import shop.db.DatabaseDispatch;
+import shop.db.ConnectionFactory;
+import shop.db.DBwriteThread;
 
 /**
  *
@@ -19,24 +24,53 @@ import shop.db.DatabaseDispatch;
  */
 public class FormStart extends javax.swing.JFrame implements Runnable {
 
-    /**
-     * Creates new form formStart
-     */
-    
+
+    //custom vars declaration
     private final BlockingQueue<String> queryStrQueue;
+    private Connection DBconnection;
     
-    //test vars
-    private int testKey = 0;
-    DatabaseDispatch dbd;
+    //pending
+    DBwriteThread dbWrite;
     
-    
-    public FormStart(BlockingQueue<String> q, DatabaseDispatch dbd) {
+    /**
+    * Creates new form formStart
+    */  
+    public FormStart() {
+        //run generated code
         initComponents();
-        logDoc = txtLog.getDocument();
-        timeFormat = DateTimeFormatter.ofPattern("HH:mm:ss");
-        queryStrQueue = q;
-        this.dbd = dbd;
-        log("started");
+        //set up log textarea
+        PrintStream os = new PrintStream(new LogDocStream(txtLog.getDocument()), true);
+        System.setOut(os);
+        System.setErr(os);
+        //set up database connection vars
+        queryStrQueue = new LinkedBlockingQueue<String>();
+        
+        System.out.print("started");
+    }
+    
+    
+    /**
+    * Connect to the shop database
+    * @param usr username
+    * @param pass password
+    * @param port port
+    */ 
+    public void connect(String usr, String pass, String port){
+        try {
+            DBconnection = ConnectionFactory.getConnection("javashopmodeldb", usr, pass, port);
+            dbWrite = new DBwriteThread(DBconnection, queryStrQueue);
+            System.out.print("connected to database as " + usr);
+        } catch (ClassNotFoundException ex) {
+            System.out.print(ex.getMessage());
+        } catch (SQLException ex) {
+            System.out.print(ex.getMessage());
+        }
+    }
+
+    
+    @Override
+    public void run() {
+        setVisible(true);
     }
 
     /**
@@ -50,9 +84,13 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
 
         jScrollPane1 = new javax.swing.JScrollPane();
         txtLog = new javax.swing.JTextArea();
-        testAddStr = new javax.swing.JButton();
-        testCommit = new javax.swing.JButton();
-        testLblCount = new javax.swing.JLabel();
+        txtUser = new javax.swing.JTextField();
+        txtPass = new javax.swing.JPasswordField();
+        lblUser = new javax.swing.JLabel();
+        lblPass = new javax.swing.JLabel();
+        btnLogin = new javax.swing.JButton();
+        lblPort = new javax.swing.JLabel();
+        txtPort = new javax.swing.JTextField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -63,21 +101,29 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
         txtLog.setDisabledTextColor(new java.awt.Color(0, 0, 0));
         jScrollPane1.setViewportView(txtLog);
 
-        testAddStr.setText("add row");
-        testAddStr.addActionListener(new java.awt.event.ActionListener() {
+        txtUser.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+
+        txtPass.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+
+        lblUser.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
+        lblUser.setText("Username");
+
+        lblPass.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
+        lblPass.setText("Password");
+
+        btnLogin.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        btnLogin.setText("Log in");
+        btnLogin.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                testAddStrActionPerformed(evt);
+                btnLoginActionPerformed(evt);
             }
         });
 
-        testCommit.setText("force commit");
-        testCommit.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                testCommitActionPerformed(evt);
-            }
-        });
+        lblPort.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
+        lblPort.setText("Port");
 
-        testLblCount.setText("0");
+        txtPort.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        txtPort.setText("3306");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -89,28 +135,42 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
                         .addContainerGap()
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 620, Short.MAX_VALUE))
                     .addGroup(layout.createSequentialGroup()
+                        .addGap(194, 194, 194)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(137, 137, 137)
-                                .addComponent(testAddStr)
-                                .addGap(121, 121, 121)
-                                .addComponent(testCommit))
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(258, 258, 258)
-                                .addComponent(testLblCount, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                            .addComponent(lblUser)
+                            .addComponent(lblPass))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(txtPass, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(txtUser, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
+            .addGroup(layout.createSequentialGroup()
+                .addGap(217, 217, 217)
+                .addComponent(lblPort)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(txtPort, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(btnLogin, javax.swing.GroupLayout.PREFERRED_SIZE, 94, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGap(115, 115, 115)
+                .addGap(103, 103, 103)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(testAddStr)
-                    .addComponent(testCommit))
-                .addGap(35, 35, 35)
-                .addComponent(testLblCount)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 116, Short.MAX_VALUE)
+                    .addComponent(txtUser, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lblUser))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(txtPass, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lblPass))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(lblPort)
+                    .addComponent(txtPort, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(btnLogin, javax.swing.GroupLayout.PREFERRED_SIZE, 33, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 78, Short.MAX_VALUE)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 165, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
@@ -118,59 +178,22 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void testAddStrActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_testAddStrActionPerformed
-        try {
-            testLblCount.setText(Integer.toString((testKey%10)+1));
-            queryStrQueue.put(String.format("insert into testtbl values (%d,'val %d')", testKey, testKey));
-            log(String.format("insert into testtbl values (%d,'val %d')", testKey, testKey));
-            testKey += 1;
-        } catch (InterruptedException ex) {
-            ex.printStackTrace();
-            
-        }
-        
-    }//GEN-LAST:event_testAddStrActionPerformed
-
-    private void testCommitActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_testCommitActionPerformed
-        dbd.forceCommit();
-    }//GEN-LAST:event_testCommitActionPerformed
-
-    /**
-     * @param args the command line arguments
-     */
-
+    private void btnLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLoginActionPerformed
+        connect(txtUser.getText(), 
+                String.valueOf(txtPass.getPassword()), 
+                txtPort.getText());
+    }//GEN-LAST:event_btnLoginActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnLogin;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JButton testAddStr;
-    private javax.swing.JButton testCommit;
-    private javax.swing.JLabel testLblCount;
+    private javax.swing.JLabel lblPass;
+    private javax.swing.JLabel lblPort;
+    private javax.swing.JLabel lblUser;
     private javax.swing.JTextArea txtLog;
+    private javax.swing.JPasswordField txtPass;
+    private javax.swing.JTextField txtPort;
+    private javax.swing.JTextField txtUser;
     // End of variables declaration//GEN-END:variables
 
-    //custom vars declaration
-    private Document logDoc;
-    private DateTimeFormatter timeFormat;
-    
-    @Override
-    public void run() {
-        setVisible(true);
-    }
-    
-     /**
-     * log a string in the gui textarea
-     */
-    public void log(String text){
-        int offset = logDoc.getLength();
-
-        String timestamp = LocalTime.now().format(timeFormat);
-
-        String message = String.format("<%s - %s> %s\n",Thread.currentThread().getName(), timestamp, text);
-
-        try {
-            logDoc.insertString(offset, message, null);
-        } catch (BadLocationException e) {
-            e.printStackTrace(); 
-        }
-    }
 }
