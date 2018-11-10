@@ -15,10 +15,10 @@ CREATE TABLE clients
 
 CREATE TABLE shops
 (
-    shopId      INT unsigned NOT NULL AUTO_INCREMENT,
-    address     VARCHAR(150) NOT NULL,
+    /*shopId      INT unsigned NOT NULL AUTO_INCREMENT,*/
     shopName    VARCHAR(150) NOT NULL,
-    PRIMARY KEY (shopId)
+    address     VARCHAR(150) NOT NULL,
+    PRIMARY KEY (shopName)
 );
 
 CREATE TABLE invoices
@@ -37,9 +37,9 @@ CREATE TABLE employees
     lastname    VARCHAR(150) NOT NULL,
     accessLvl   TINYINT(1) unsigned NOT NULL,
     active      TINYINT(1) unsigned NOT NULL, /*we can't drop people who are not working anymore*/ 
-    shopId      INT unsigned NOT NULL,
+    shopName    VARCHAR(150) NOT NULL,
     PRIMARY KEY (employeeId),
-    FOREIGN KEY (shopId) REFERENCES shops(shopId)
+    FOREIGN KEY (shopName) REFERENCES shops(shopName)
 );
 
 CREATE TABLE productCategories
@@ -55,6 +55,7 @@ CREATE TABLE products
     productName     VARCHAR(150) NOT NULL,
     price           DECIMAL NOT NULL,
     categoryId      INT unsigned NOT NULL,
+    active          TINYINT(1) unsigned NOT NULL, /*we can't drop deleted products*/
     PRIMARY KEY     (productId),
     FOREIGN KEY     (categoryId) REFERENCES productCategories(productCategoriyId)    
 );
