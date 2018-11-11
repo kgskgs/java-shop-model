@@ -16,6 +16,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JLayeredPane;
+import javax.swing.JPanel;
 import javax.swing.text.*;
 import shop.db.ConnectionFactory;
 import shop.db.DBwriteThread;
@@ -61,6 +62,7 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
         try {
             DBconnection = ConnectionFactory.getConnection("javashopmodeldb", usr, pass, port);
             dbWrite = new DBwriteThread(DBconnection, queryStrQueue);
+            dbWrite.start();
             System.out.print("connected to database as " + usr);
             return true;
         } catch (ClassNotFoundException ex) {
@@ -72,6 +74,7 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
         }
     }
     
+    //UI HELPER FUNCTIONS
     /**
      * swap two components in the layered pane
      * @param lp layered pane that contains the components
@@ -85,6 +88,16 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
         lp.setLayer(b, layerA);
     }
 
+    /**
+     * setEnabled for all components in a panel
+     * @param pnl target panel
+     * @param enaled value to set
+     */
+    private void setEnabledPanel(JPanel pnl, boolean enabled){
+        for (Component c : pnl.getComponents()){
+            c.setEnabled(enabled);
+        }
+    }
     
     @Override
     public void run() {
@@ -100,8 +113,6 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        pnlCheckout = new javax.swing.JPanel();
-        pnlReports = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         txtLog = new javax.swing.JTextArea();
         lpMain = new javax.swing.JLayeredPane();
@@ -159,6 +170,38 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
         txtProdPrice = new javax.swing.JTextField();
         jLabel15 = new javax.swing.JLabel();
         txtProdId = new javax.swing.JTextField();
+        pnlCheckout = new javax.swing.JPanel();
+        tblSP = new javax.swing.JScrollPane();
+        tblCheckProds = new javax.swing.JTable();
+        cmbCheckProd = new javax.swing.JComboBox<>();
+        btnCheckAdd = new javax.swing.JButton();
+        chkInvoice = new javax.swing.JCheckBox();
+        btnCheckDel = new javax.swing.JButton();
+        txtCheckNum = new javax.swing.JTextField();
+        jButton1 = new javax.swing.JButton();
+        pnlInvoice = new javax.swing.JPanel();
+        jLabel16 = new javax.swing.JLabel();
+        cmbInvCname = new javax.swing.JComboBox<>();
+        txtInvCname = new javax.swing.JTextField();
+        jLabel17 = new javax.swing.JLabel();
+        txtInvEIK = new javax.swing.JTextField();
+        jLabel18 = new javax.swing.JLabel();
+        txtInvFname = new javax.swing.JTextField();
+        jLabel19 = new javax.swing.JLabel();
+        txtInvLname = new javax.swing.JTextField();
+        pnlReports = new javax.swing.JPanel();
+        jLabel20 = new javax.swing.JLabel();
+        cmbRepShop = new javax.swing.JComboBox<>();
+        jLabel21 = new javax.swing.JLabel();
+        cmbRepEmp = new javax.swing.JComboBox<>();
+        jLabel22 = new javax.swing.JLabel();
+        txtRepFrom = new javax.swing.JTextField();
+        jLabel23 = new javax.swing.JLabel();
+        txtRepTo = new javax.swing.JTextField();
+        chkRepInv = new javax.swing.JCheckBox();
+        txtRepEIK = new javax.swing.JTextField();
+        bntRepGet = new javax.swing.JButton();
+        jLabel24 = new javax.swing.JLabel();
         pnlLogin = new javax.swing.JPanel();
         txtUser = new javax.swing.JTextField();
         txtPass = new javax.swing.JPasswordField();
@@ -170,36 +213,16 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
         jMenuBar1 = new javax.swing.JMenuBar();
         mnuFileGrp = new javax.swing.JMenu();
         mnuSaveLog = new javax.swing.JMenuItem();
+        mnuCommit = new javax.swing.JMenuItem();
         mnuExit = new javax.swing.JMenuItem();
         mnuUserGrp = new javax.swing.JMenu();
         mnuLogout = new javax.swing.JMenuItem();
         mnuUinfo = new javax.swing.JMenuItem();
 
-        javax.swing.GroupLayout pnlCheckoutLayout = new javax.swing.GroupLayout(pnlCheckout);
-        pnlCheckout.setLayout(pnlCheckoutLayout);
-        pnlCheckoutLayout.setHorizontalGroup(
-            pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 100, Short.MAX_VALUE)
-        );
-        pnlCheckoutLayout.setVerticalGroup(
-            pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 100, Short.MAX_VALUE)
-        );
-
-        javax.swing.GroupLayout pnlReportsLayout = new javax.swing.GroupLayout(pnlReports);
-        pnlReports.setLayout(pnlReportsLayout);
-        pnlReportsLayout.setHorizontalGroup(
-            pnlReportsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 100, Short.MAX_VALUE)
-        );
-        pnlReportsLayout.setVerticalGroup(
-            pnlReportsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 100, Short.MAX_VALUE)
-        );
-
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setFocusCycleRoot(false);
-        setPreferredSize(new java.awt.Dimension(600, 600));
+        setPreferredSize(new java.awt.Dimension(600, 620));
+        setResizable(false);
 
         txtLog.setEditable(false);
         txtLog.setColumns(20);
@@ -305,30 +328,27 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
         pnlDetailEmpLayout.setHorizontalGroup(
             pnlDetailEmpLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnlDetailEmpLayout.createSequentialGroup()
+                .addContainerGap()
                 .addGroup(pnlDetailEmpLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(pnlDetailEmpLayout.createSequentialGroup()
-                        .addContainerGap()
                         .addComponent(jLabel6)
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addGroup(pnlDetailEmpLayout.createSequentialGroup()
-                        .addContainerGap()
-                        .addGroup(pnlDetailEmpLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(pnlDetailEmpLayout.createSequentialGroup()
-                                .addComponent(jLabel5)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(txtEmpName1, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(txtEmpName2))
-                            .addGroup(pnlDetailEmpLayout.createSequentialGroup()
-                                .addComponent(jLabel7)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(pnlDetailEmpLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                    .addComponent(cmbEmpShop, javax.swing.GroupLayout.Alignment.LEADING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(txtEmpKey)))
-                            .addGroup(pnlDetailEmpLayout.createSequentialGroup()
-                                .addComponent(jLabel8)
-                                .addGap(15, 15, 15)
-                                .addComponent(cmbEmpRank, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))
+                        .addComponent(jLabel5)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtEmpName1, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(txtEmpName2))
+                    .addGroup(pnlDetailEmpLayout.createSequentialGroup()
+                        .addComponent(jLabel7)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(pnlDetailEmpLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(cmbEmpShop, javax.swing.GroupLayout.Alignment.LEADING, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(txtEmpKey)))
+                    .addGroup(pnlDetailEmpLayout.createSequentialGroup()
+                        .addComponent(jLabel8)
+                        .addGap(15, 15, 15)
+                        .addComponent(cmbEmpRank, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addContainerGap())
             .addGroup(pnlDetailEmpLayout.createSequentialGroup()
                 .addGap(18, 18, 18)
@@ -356,9 +376,9 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
                     .addComponent(jLabel6)
                     .addComponent(cmbEmpShop, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(pnlDetailEmpLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel8)
-                    .addComponent(cmbEmpRank, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(pnlDetailEmpLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmbEmpRank, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel8))
                 .addGap(18, 18, 18)
                 .addGroup(pnlDetailEmpLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btnEmpUpdate)
@@ -400,7 +420,7 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
                             .addComponent(jLabel2))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(pnlShopsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 327, Short.MAX_VALUE)
+                            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 347, Short.MAX_VALUE)
                             .addComponent(jScrollPane3, javax.swing.GroupLayout.Alignment.TRAILING)))
                     .addGroup(pnlShopsLayout.createSequentialGroup()
                         .addGap(5, 5, 5)
@@ -587,16 +607,298 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(pnlDetailEmp1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 327, Short.MAX_VALUE)
+                    .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 347, Short.MAX_VALUE)
                     .addComponent(jScrollPane5, javax.swing.GroupLayout.Alignment.TRAILING))
                 .addContainerGap())
         );
 
         tbtMain.addTab("Products", pnlProducts);
 
-        txtUser.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        tblCheckProds.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, "test1",  new Integer(1)},
+                {null, "test2",  new Integer(2)},
+                {null, "test3",  new Integer(3)}
+            },
+            new String [] {
+                "ID", "Product", "#"
+            }
+        ) {
+            Class[] types = new Class [] {
+                java.lang.Integer.class, java.lang.String.class, java.lang.Integer.class
+            };
+            boolean[] canEdit = new boolean [] {
+                false, false, true
+            };
 
-        txtPass.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        tblCheckProds.getTableHeader().setReorderingAllowed(false);
+        tblSP.setViewportView(tblCheckProds);
+        if (tblCheckProds.getColumnModel().getColumnCount() > 0) {
+            tblCheckProds.getColumnModel().getColumn(0).setResizable(false);
+            tblCheckProds.getColumnModel().getColumn(0).setPreferredWidth(50);
+            tblCheckProds.getColumnModel().getColumn(1).setResizable(false);
+            tblCheckProds.getColumnModel().getColumn(1).setPreferredWidth(250);
+            tblCheckProds.getColumnModel().getColumn(2).setResizable(false);
+            tblCheckProds.getColumnModel().getColumn(2).setPreferredWidth(50);
+        }
+
+        cmbCheckProd.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
+        btnCheckAdd.setText("Add");
+
+        chkInvoice.setText("Invoice");
+        chkInvoice.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkInvoiceActionPerformed(evt);
+            }
+        });
+
+        btnCheckDel.setText("Remove");
+
+        txtCheckNum.setText("1");
+
+        jButton1.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
+        jButton1.setText("Done");
+
+        pnlInvoice.setBorder(javax.swing.BorderFactory.createTitledBorder("Invoice"));
+
+        jLabel16.setText("Company");
+        jLabel16.setEnabled(false);
+
+        cmbInvCname.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        cmbInvCname.setEnabled(false);
+
+        txtInvCname.setEnabled(false);
+
+        jLabel17.setText("EIK");
+        jLabel17.setEnabled(false);
+
+        txtInvEIK.setEnabled(false);
+
+        jLabel18.setText("First Name");
+        jLabel18.setEnabled(false);
+
+        txtInvFname.setEnabled(false);
+
+        jLabel19.setText("Last Name");
+        jLabel19.setEnabled(false);
+
+        txtInvLname.setEnabled(false);
+
+        javax.swing.GroupLayout pnlInvoiceLayout = new javax.swing.GroupLayout(pnlInvoice);
+        pnlInvoice.setLayout(pnlInvoiceLayout);
+        pnlInvoiceLayout.setHorizontalGroup(
+            pnlInvoiceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pnlInvoiceLayout.createSequentialGroup()
+                .addGroup(pnlInvoiceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(pnlInvoiceLayout.createSequentialGroup()
+                        .addGap(18, 18, 18)
+                        .addGroup(pnlInvoiceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jLabel17)
+                            .addComponent(jLabel16))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(pnlInvoiceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(txtInvCname)
+                            .addComponent(cmbInvCname, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(txtInvEIK)))
+                    .addGroup(pnlInvoiceLayout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(pnlInvoiceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel18)
+                            .addComponent(jLabel19))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(pnlInvoiceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(txtInvLname)
+                            .addComponent(txtInvFname))))
+                .addContainerGap())
+        );
+        pnlInvoiceLayout.setVerticalGroup(
+            pnlInvoiceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pnlInvoiceLayout.createSequentialGroup()
+                .addGroup(pnlInvoiceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(pnlInvoiceLayout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(cmbInvCname, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtInvCname, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(pnlInvoiceLayout.createSequentialGroup()
+                        .addGap(26, 26, 26)
+                        .addComponent(jLabel16)))
+                .addGap(8, 8, 8)
+                .addGroup(pnlInvoiceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel17)
+                    .addComponent(txtInvEIK, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(24, 24, 24)
+                .addGroup(pnlInvoiceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel18)
+                    .addComponent(txtInvFname, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(pnlInvoiceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel19)
+                    .addComponent(txtInvLname, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        javax.swing.GroupLayout pnlCheckoutLayout = new javax.swing.GroupLayout(pnlCheckout);
+        pnlCheckout.setLayout(pnlCheckoutLayout);
+        pnlCheckoutLayout.setHorizontalGroup(
+            pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pnlCheckoutLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(pnlCheckoutLayout.createSequentialGroup()
+                        .addComponent(cmbCheckProd, javax.swing.GroupLayout.PREFERRED_SIZE, 193, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(txtCheckNum, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btnCheckAdd)
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(pnlCheckoutLayout.createSequentialGroup()
+                        .addComponent(tblSP, javax.swing.GroupLayout.PREFERRED_SIZE, 294, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGroup(pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(pnlCheckoutLayout.createSequentialGroup()
+                                .addGap(68, 68, 68)
+                                .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 115, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(0, 88, Short.MAX_VALUE))
+                            .addGroup(pnlCheckoutLayout.createSequentialGroup()
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(chkInvoice)
+                                    .addComponent(btnCheckDel)
+                                    .addComponent(pnlInvoice, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))))
+        );
+        pnlCheckoutLayout.setVerticalGroup(
+            pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pnlCheckoutLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(cmbCheckProd, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(btnCheckAdd)
+                    .addComponent(txtCheckNum, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                    .addComponent(tblSP, javax.swing.GroupLayout.PREFERRED_SIZE, 312, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(pnlCheckoutLayout.createSequentialGroup()
+                        .addComponent(btnCheckDel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(chkInvoice)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(pnlInvoice, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 57, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        tbtMain.addTab("Checkout", pnlCheckout);
+
+        jLabel20.setText("From shop");
+
+        cmbRepShop.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
+        jLabel21.setText("Created by");
+
+        cmbRepEmp.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
+        jLabel22.setText("From date:");
+
+        txtRepFrom.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+
+        jLabel23.setText("to");
+
+        txtRepTo.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+
+        chkRepInv.setText("has Invoice with EIK:");
+        chkRepInv.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                chkRepInvActionPerformed(evt);
+            }
+        });
+
+        txtRepEIK.setHorizontalAlignment(javax.swing.JTextField.CENTER);
+        txtRepEIK.setText("*");
+        txtRepEIK.setEnabled(false);
+
+        bntRepGet.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
+        bntRepGet.setText("Generate");
+
+        jLabel24.setText("Get information for all reciepts that are:");
+
+        javax.swing.GroupLayout pnlReportsLayout = new javax.swing.GroupLayout(pnlReports);
+        pnlReports.setLayout(pnlReportsLayout);
+        pnlReportsLayout.setHorizontalGroup(
+            pnlReportsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pnlReportsLayout.createSequentialGroup()
+                .addGroup(pnlReportsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(pnlReportsLayout.createSequentialGroup()
+                        .addGap(147, 147, 147)
+                        .addGroup(pnlReportsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(pnlReportsLayout.createSequentialGroup()
+                                .addComponent(chkRepInv)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(txtRepEIK, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(pnlReportsLayout.createSequentialGroup()
+                                .addComponent(jLabel22)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(txtRepFrom, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jLabel23)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(txtRepTo, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(pnlReportsLayout.createSequentialGroup()
+                                .addGroup(pnlReportsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jLabel21)
+                                    .addComponent(jLabel20))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addGroup(pnlReportsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(cmbRepShop, javax.swing.GroupLayout.PREFERRED_SIZE, 152, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(cmbRepEmp, javax.swing.GroupLayout.PREFERRED_SIZE, 152, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                            .addComponent(jLabel24)))
+                    .addGroup(pnlReportsLayout.createSequentialGroup()
+                        .addGap(215, 215, 215)
+                        .addComponent(bntRepGet, javax.swing.GroupLayout.PREFERRED_SIZE, 115, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(147, Short.MAX_VALUE))
+        );
+        pnlReportsLayout.setVerticalGroup(
+            pnlReportsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pnlReportsLayout.createSequentialGroup()
+                .addGap(61, 61, 61)
+                .addComponent(jLabel24)
+                .addGap(18, 18, 18)
+                .addGroup(pnlReportsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel20)
+                    .addComponent(cmbRepShop, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(pnlReportsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel21)
+                    .addComponent(cmbRepEmp, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(18, 18, 18)
+                .addGroup(pnlReportsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel22)
+                    .addComponent(txtRepFrom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel23)
+                    .addComponent(txtRepTo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(18, 18, 18)
+                .addGroup(pnlReportsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(chkRepInv)
+                    .addComponent(txtRepEIK, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(bntRepGet, javax.swing.GroupLayout.PREFERRED_SIZE, 57, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(110, Short.MAX_VALUE))
+        );
+
+        tbtMain.addTab("Report", pnlReports);
+
+        txtUser.setFont(new java.awt.Font("Tahoma", 0, 16)); // NOI18N
+
+        txtPass.setFont(new java.awt.Font("Tahoma", 0, 16)); // NOI18N
 
         lblUser.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
         lblUser.setText("Username");
@@ -604,7 +906,7 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
         lblPass.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
         lblPass.setText("Password");
 
-        btnLogin.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        btnLogin.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
         btnLogin.setText("Log in");
         btnLogin.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -612,7 +914,7 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
             }
         });
 
-        lblPort.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
+        lblPort.setFont(new java.awt.Font("Tahoma", 0, 16)); // NOI18N
         lblPort.setText("Port");
 
         txtPort.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
@@ -623,7 +925,7 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
         pnlLoginLayout.setHorizontalGroup(
             pnlLoginLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnlLoginLayout.createSequentialGroup()
-                .addGap(169, 169, 169)
+                .addGap(160, 160, 160)
                 .addGroup(pnlLoginLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(pnlLoginLayout.createSequentialGroup()
                         .addComponent(lblUser)
@@ -641,12 +943,12 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
                         .addComponent(txtPort, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(6, 6, 6)
                         .addComponent(btnLogin, javax.swing.GroupLayout.PREFERRED_SIZE, 94, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(229, Short.MAX_VALUE))
+                .addContainerGap(198, Short.MAX_VALUE))
         );
         pnlLoginLayout.setVerticalGroup(
             pnlLoginLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnlLoginLayout.createSequentialGroup()
-                .addGap(73, 73, 73)
+                .addGap(138, 138, 138)
                 .addGroup(pnlLoginLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(txtUser, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(lblUser))
@@ -656,14 +958,13 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
                     .addComponent(lblPass))
                 .addGap(11, 11, 11)
                 .addGroup(pnlLoginLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(pnlLoginLayout.createSequentialGroup()
-                        .addGap(5, 5, 5)
+                    .addGroup(pnlLoginLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(txtPort, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addComponent(lblPort))
-                    .addComponent(txtPort, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(pnlLoginLayout.createSequentialGroup()
                         .addGap(1, 1, 1)
                         .addComponent(btnLogin, javax.swing.GroupLayout.PREFERRED_SIZE, 33, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(87, Short.MAX_VALUE))
+                .addContainerGap(157, Short.MAX_VALUE))
         );
 
         lpMain.setLayer(tbtMain, javax.swing.JLayeredPane.DEFAULT_LAYER);
@@ -673,9 +974,9 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
         lpMain.setLayout(lpMainLayout);
         lpMainLayout.setHorizontalGroup(
             lpMainLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(tbtMain, javax.swing.GroupLayout.Alignment.TRAILING)
+            .addComponent(tbtMain)
             .addGroup(lpMainLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                .addComponent(pnlLogin, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(pnlLogin, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         lpMainLayout.setVerticalGroup(
             lpMainLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -688,6 +989,15 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
 
         mnuSaveLog.setText("Save Log");
         mnuFileGrp.add(mnuSaveLog);
+
+        mnuCommit.setText("Force commit to DB");
+        mnuCommit.setEnabled(false);
+        mnuCommit.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuCommitActionPerformed(evt);
+            }
+        });
+        mnuFileGrp.add(mnuCommit);
 
         mnuExit.setText("Exit");
         mnuFileGrp.add(mnuExit);
@@ -719,8 +1029,8 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(lpMain)
-                    .addComponent(jScrollPane1))
+                    .addComponent(jScrollPane1)
+                    .addComponent(lpMain))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -738,26 +1048,43 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
     //Login pressed
     private void btnLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLoginActionPerformed
         boolean connectionSuccess = connect(txtUser.getText(), 
-                String.valueOf(txtPass.getPassword()), 
-                txtPort.getText());
+                                    String.valueOf(txtPass.getPassword()), 
+                                    txtPort.getText());
         
         if (connectionSuccess){
             txtPass.setText("");
             mnuUserGrp.setEnabled(true);
+            mnuCommit.setEnabled(true);
             swapLayers(lpMain, pnlLogin, tbtMain);
         }
     }//GEN-LAST:event_btnLoginActionPerformed
 
     private void mnuLogoutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuLogoutActionPerformed
         mnuUserGrp.setEnabled(false);
+        mnuCommit.setEnabled(false);
         swapLayers(lpMain, pnlLogin, tbtMain);
         System.out.print("logged out");
     }//GEN-LAST:event_mnuLogoutActionPerformed
 
+    private void mnuCommitActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCommitActionPerformed
+        dbWrite.forceCommit();
+    }//GEN-LAST:event_mnuCommitActionPerformed
+
+    private void chkInvoiceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkInvoiceActionPerformed
+        setEnabledPanel(pnlInvoice, chkInvoice.isSelected());
+    }//GEN-LAST:event_chkInvoiceActionPerformed
+
+    private void chkRepInvActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkRepInvActionPerformed
+        txtRepEIK.setEnabled(chkRepInv.isSelected());
+    }//GEN-LAST:event_chkRepInvActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton bntRepGet;
     private javax.swing.JButton btnCatDelete;
     private javax.swing.JButton btnCatNew;
     private javax.swing.JButton btnCatUpdate;
+    private javax.swing.JButton btnCheckAdd;
+    private javax.swing.JButton btnCheckDel;
     private javax.swing.JButton btnEmpDelete;
     private javax.swing.JButton btnEmpNew;
     private javax.swing.JButton btnEmpUpdate;
@@ -768,8 +1095,15 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
     private javax.swing.JButton btnShopDelete;
     private javax.swing.JButton btnShopNew;
     private javax.swing.JButton btnShopUpdate;
+    private javax.swing.JCheckBox chkInvoice;
+    private javax.swing.JCheckBox chkRepInv;
+    private javax.swing.JComboBox<String> cmbCheckProd;
     private javax.swing.JComboBox<String> cmbEmpRank;
     private javax.swing.JComboBox<String> cmbEmpShop;
+    private javax.swing.JComboBox<String> cmbInvCname;
+    private javax.swing.JComboBox<String> cmbRepEmp;
+    private javax.swing.JComboBox<String> cmbRepShop;
+    private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
@@ -777,7 +1111,16 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
     private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel14;
     private javax.swing.JLabel jLabel15;
+    private javax.swing.JLabel jLabel16;
+    private javax.swing.JLabel jLabel17;
+    private javax.swing.JLabel jLabel18;
+    private javax.swing.JLabel jLabel19;
     private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel20;
+    private javax.swing.JLabel jLabel21;
+    private javax.swing.JLabel jLabel22;
+    private javax.swing.JLabel jLabel23;
+    private javax.swing.JLabel jLabel24;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
@@ -799,6 +1142,7 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
     private javax.swing.JList<String> lstEmps;
     private javax.swing.JList<String> lstProds;
     private javax.swing.JList<String> lstShops;
+    private javax.swing.JMenuItem mnuCommit;
     private javax.swing.JMenuItem mnuExit;
     private javax.swing.JMenu mnuFileGrp;
     private javax.swing.JMenuItem mnuLogout;
@@ -810,22 +1154,33 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
     private javax.swing.JPanel pnlDetailEmp1;
     private javax.swing.JPanel pnlDetailsCat;
     private javax.swing.JPanel pnlDetailsShop;
+    private javax.swing.JPanel pnlInvoice;
     private javax.swing.JPanel pnlLogin;
     private javax.swing.JPanel pnlProducts;
     private javax.swing.JPanel pnlReports;
     private javax.swing.JPanel pnlShops;
+    private javax.swing.JTable tblCheckProds;
+    private javax.swing.JScrollPane tblSP;
     private javax.swing.JTabbedPane tbtMain;
     private javax.swing.JTextField txtCatId;
     private javax.swing.JTextField txtCatName;
+    private javax.swing.JTextField txtCheckNum;
     private javax.swing.JTextField txtEmpKey;
     private javax.swing.JTextField txtEmpName1;
     private javax.swing.JTextField txtEmpName2;
+    private javax.swing.JTextField txtInvCname;
+    private javax.swing.JTextField txtInvEIK;
+    private javax.swing.JTextField txtInvFname;
+    private javax.swing.JTextField txtInvLname;
     private javax.swing.JTextArea txtLog;
     private javax.swing.JPasswordField txtPass;
     private javax.swing.JTextField txtPort;
     private javax.swing.JTextField txtProdId;
     private javax.swing.JTextField txtProdName;
     private javax.swing.JTextField txtProdPrice;
+    private javax.swing.JTextField txtRepEIK;
+    private javax.swing.JTextField txtRepFrom;
+    private javax.swing.JTextField txtRepTo;
     private javax.swing.JTextField txtShopAdress;
     private javax.swing.JTextField txtShopName;
     private javax.swing.JTextField txtUser;

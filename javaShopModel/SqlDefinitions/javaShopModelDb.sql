@@ -5,12 +5,11 @@ use javashopmodeldb;
 
 CREATE TABLE clients
 (
-    clientId    INT unsigned NOT NULL AUTO_INCREMENT,
+    eik     	VARCHAR(15)  NOT NULL,
     firstname   VARCHAR(150) NOT NULL,
     lastname    VARCHAR(150) NOT NULL,
     companyName VARCHAR(150) NOT NULL,
-    bulstat     VARCHAR(15)  NOT NULL,
-    PRIMARY     KEY(clientId) 
+    PRIMARY KEY(eik) 
 );
 
 CREATE TABLE shops
@@ -24,10 +23,10 @@ CREATE TABLE shops
 CREATE TABLE invoices
 (
     invoiceId   INT unsigned NOT NULL AUTO_INCREMENT,
-    clientId    INT unsigned NOT NULL,
+    eik    		VARCHAR(15) NULL,
     orderDate   TIMESTAMP NOT NULL,
     PRIMARY KEY (invoiceId),
-    FOREIGN KEY (clientID) REFERENCES clients(clientId)    
+    FOREIGN KEY (eik) REFERENCES clients(eik)    
 );
 
 CREATE TABLE employees
@@ -63,7 +62,7 @@ CREATE TABLE products
 CREATE TABLE receipts
 (
     receiptId       INT unsigned NOT NULL AUTO_INCREMENT, 
-    invoice         INT NULL, 
+    invoice         TINYINT(1) unsigned NOT NULL, 
     invoiceId       INT unsigned,
     employeeId      VARCHAR(32),
     buyDate         TIMESTAMP NOT NULL,
