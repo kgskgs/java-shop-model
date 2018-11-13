@@ -9,8 +9,6 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.concurrent.BlockingQueue;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -29,6 +27,7 @@ public class DBwriteThread extends Thread {
     private String tmpQueryStr;
     
     private final BlockingQueue<String> queryStrQueue;
+    private volatile boolean forceCommit = false;
     
     public DBwriteThread(Connection con, BlockingQueue<String> q) throws SQLException{
         this.con = con;
@@ -42,52 +41,47 @@ public class DBwriteThread extends Thread {
 
     /**
      * wait for statements to be added to the queue
-     * if the number of statements exceed BATCH_EXEC_SIZE,
+     * if the number of statements exceed BATCH_EXEC_SIZE or forceCommit flag is set,
      * write the statements to the database
      */
     @Override
     public void run() {
         System.out.print(Thread.currentThread().getName() + " runs");
-        try {
-            while(true){
-                try {
-                    tmpQueryStr = queryStrQueue.take(); //take blocks the thread
-                    state.addBatch(tmpQueryStr);
-                    queryC++;
-                    
-                    if(queryC >= BATCH_EXEC_SIZE){
-                        reportCommit();
-                        state.executeBatch();
-                        queryC = 0;
-                    }
-                } catch (SQLException ex) {
-                    System.out.print(ex.getMessage());
-                }
-            }
-        } catch (InterruptedException ex) {
-            System.out.print(ex.getMessage());
-        }
-    }
-     
-    /**
-     * write to DB regardless of batch size
-     */
-    public void forceCommit(){
-        if(queryC > 0){
+        while(true){
             try {
-                reportCommit();
-                state.executeBatch();
-                queryC = 0;
-            } catch (SQLException ex) {
+                    //tmpQueryStr = queryStrQueue.take(); //take blocks the thread
+                    //poll used so we can force commit on the same thread
+                    if ((tmpQueryStr = queryStrQueue.poll()) != null){
+                        state.addBatch(tmpQueryStr);
+                        queryC++;
+                    }
+                    if(queryC >= BATCH_EXEC_SIZE || (forceCommit && queryC > 0)){
+                        state.executeBatch();
+                        reportCommit();
+                        queryC = 0;
+                        forceCommit = false;
+                    }
+                    sleep(950);
+            } 
+            catch (SQLException ex) {
                 System.out.print(ex.getMessage());
-            }
-        } else {
-            System.out.print("nothing to commit");
+            } catch (InterruptedException ex) {
+                System.out.print(ex.getMessage());
+            } 
         }
+    } 
+        
+    
+    /**
+     * used to write to DB regardless of batch size
+     * @param fc boolean to set the force commit flag to
+     */
+    public void setForceCommit(boolean fc){
+        forceCommit = fc;
     }
     
     private void reportCommit(){
-        System.out.print("commiting " + queryC + " statements to database");
+        System.out.print(Thread.currentThread().getName() +": commiting " + queryC + " statements to database");
     }
     
 }

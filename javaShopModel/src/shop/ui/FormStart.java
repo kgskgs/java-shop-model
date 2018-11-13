@@ -9,15 +9,10 @@ import java.awt.Component;
 import java.io.PrintStream;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JLayeredPane;
 import javax.swing.JPanel;
-import javax.swing.text.*;
 import shop.db.ConnectionFactory;
 import shop.db.DBwriteThread;
 
@@ -43,8 +38,8 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
         initComponents();
         //set up log textarea
         PrintStream os = new PrintStream(new LogDocStream(txtLog.getDocument()), true);
-        System.setOut(os);
-        System.setErr(os);
+        //System.setOut(os);
+        //System.setErr(os);
         //set up database connection vars
         queryStrQueue = new LinkedBlockingQueue<String>();
         
@@ -221,7 +216,6 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setFocusCycleRoot(false);
-        setPreferredSize(new java.awt.Dimension(600, 620));
         setResizable(false);
 
         txtLog.setEditable(false);
@@ -988,6 +982,11 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
         mnuFileGrp.setText("File");
 
         mnuSaveLog.setText("Save Log");
+        mnuSaveLog.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuSaveLogActionPerformed(evt);
+            }
+        });
         mnuFileGrp.add(mnuSaveLog);
 
         mnuCommit.setText("Force commit to DB");
@@ -1067,7 +1066,7 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
     }//GEN-LAST:event_mnuLogoutActionPerformed
 
     private void mnuCommitActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCommitActionPerformed
-        dbWrite.forceCommit();
+        dbWrite.setForceCommit(true);
     }//GEN-LAST:event_mnuCommitActionPerformed
 
     private void chkInvoiceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkInvoiceActionPerformed
@@ -1077,6 +1076,10 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
     private void chkRepInvActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkRepInvActionPerformed
         txtRepEIK.setEnabled(chkRepInv.isSelected());
     }//GEN-LAST:event_chkRepInvActionPerformed
+
+    private void mnuSaveLogActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSaveLogActionPerformed
+        //TODO add code
+    }//GEN-LAST:event_mnuSaveLogActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton bntRepGet;
