@@ -46,7 +46,7 @@ public class DBwriteThread extends Thread {
      */
     @Override
     public void run() {
-        System.out.print(Thread.currentThread().getName() + " runs");
+        System.out.println(Thread.currentThread().getName() + " runs");
         while(true){
             try {
                     //tmpQueryStr = queryStrQueue.take(); //take blocks the thread
@@ -64,9 +64,9 @@ public class DBwriteThread extends Thread {
                     sleep(950);
             } 
             catch (SQLException ex) {
-                System.out.print(ex.getMessage());
+                System.out.println(ex.getMessage());
             } catch (InterruptedException ex) {
-                System.out.print(ex.getMessage());
+                System.out.println(ex.getMessage());
             } 
         }
     } 
@@ -81,7 +81,7 @@ public class DBwriteThread extends Thread {
     }
     
     private void reportCommit(){
-        System.out.print(Thread.currentThread().getName() +": commiting " + queryC + " statements to database");
+        System.out.println(Thread.currentThread().getName() +": commiting " + queryC + " statements to database");
     }
     
 }

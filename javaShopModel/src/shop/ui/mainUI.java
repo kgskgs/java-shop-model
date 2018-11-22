@@ -26,7 +26,7 @@ public class mainUI {
        }
        
         
-       FormStart f1 = new FormStart();
+       ShopForm f1 = new ShopForm();
        SwingUtilities.invokeLater(f1);
     
     }
