@@ -3,22 +3,22 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package shop.models;
+package shop.infrastructure;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.concurrent.BlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import shop.models.Client;
 
 /**
  *
  * @author Lyuboslav
  */
-public class ClientRepository {
+public class ClientRepository implements IRepository<Client> {
         
     private final Connection connection;
     private final Statement statement;
@@ -29,6 +29,7 @@ public class ClientRepository {
         statement = connection.createStatement();        
     }
     
+    @Override
     public ArrayList<Client> GetAll(int page, int count)
     {
         ArrayList<Client> result = new ArrayList<>();
@@ -50,10 +51,11 @@ public class ClientRepository {
         return result;
     }
     
-    public Client Get(String eik)
+    @Override
+    public Client Get(int id)
     {
         try {          
-            ResultSet set = statement.executeQuery("SELECT * FROM clients WHERE eik = '" + eik + "';");
+            ResultSet set = statement.executeQuery("SELECT * FROM clients WHERE clientId = '" + id + "';");
             if (set.next()) {
                 Client client = new Client();
                 client.Eik = set.getString("eik");
@@ -72,6 +74,7 @@ public class ClientRepository {
         }
     }
     
+    @Override
     public String Insert(Client c)
     {
         return "INSERT INTO clients VALUES (" + 
@@ -81,6 +84,7 @@ public class ClientRepository {
                 c.CompanyName + ");";
     }
     
+    @Override
     public String Delete(Client c)
     {
         return "DELETE FROM clients WHERE eik = '" + c.Eik + "';";              

@@ -14,7 +14,7 @@ CREATE TABLE clients
 
 CREATE TABLE shops
 (
-    /*shopId      INT unsigned NOT NULL AUTO_INCREMENT,*/
+    shopId      INT unsigned NOT NULL AUTO_INCREMENT,
     shopName    VARCHAR(150) NOT NULL,
     address     VARCHAR(150) NOT NULL,
     PRIMARY KEY (shopName)
