@@ -10,5 +10,15 @@ package shop.models;
  * @author Lyuboslav
  */
 public class Shop {
-    
+    public int shopId;
+    public String shopName;
+    public String address;
 }
+
+/*CREATE TABLE shops
+(
+    shopId      INT unsigned NOT NULL AUTO_INCREMENT,
+    shopName    VARCHAR(150) NOT NULL,
+    address     VARCHAR(150) NOT NULL,
+    PRIMARY KEY (shopName)
+);*/

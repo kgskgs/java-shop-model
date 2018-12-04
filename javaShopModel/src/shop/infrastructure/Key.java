@@ -5,17 +5,14 @@
  */
 package shop.infrastructure;
 
-import java.util.ArrayList;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
 /**
  *
  * @author Lyuboslav
- * @param <T>
  */
-public interface IRepository<T> {
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Key {
     
-    public ArrayList<T> GetAll(int page, int count);
-    public T Get(int key);
-    public String Insert(T model);
-    public String Delete(T model);
 }

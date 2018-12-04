@@ -10,10 +10,11 @@ package shop.models;
  * @author Lyuboslav
  */
 public class Client {
-    public String Eik;
-    public String Firstname;
-    public String Lastname;
-    public String CompanyName;
+    public int clientId;
+    public String eik;
+    public String firstname;
+    public String lastname;
+    public String companyName;
 }
 
 /*CREATE TABLE clients
