@@ -9,12 +9,14 @@ package shop.models;
  *
  * @author Lyuboslav
  */
-public class Client {
+public class Client{
+    //DB data fields
     public int clientId;
     public String eik;
     public String firstname;
     public String lastname;
     public String companyName;
+    public int clientId;
 }
 
 /*CREATE TABLE clients

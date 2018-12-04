@@ -9,31 +9,48 @@ import java.awt.Component;
 import java.io.PrintStream;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import javax.swing.ComboBoxModel;
 import javax.swing.JLayeredPane;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 import shop.db.ConnectionFactory;
 import shop.db.DBwriteThread;
+import shop.models.Client;
+import shop.models.ClientRepository;
 
 /**
- *
+ * 
  * @author K1
  */
-public class FormStart extends javax.swing.JFrame implements Runnable {
+public class ShopForm extends javax.swing.JFrame implements Runnable {
 
+    
+    public static final int PNL_SHOPS = 0;
+    public static final int PNL_PRODUCTS = 1;
+    public static final int PNL_CHECKOUT = 2;
 
-    //custom vars declaration
+    //db custom vars declaration
     private final BlockingQueue<String> queryStrQueue;
     private Connection DBconnection;
-    
-    //pending
     DBwriteThread dbWrite;
     
+    //internal flags
+    private boolean loggedIn = false;
+    private int focusedTab = 0;
+    
+    //model entities
+    //invoice
+    ClientRepository CliR;
+    ArrayList<Client> clients;
+    
+ 
     /**
-    * Creates new form formStart
-    */  
-    public FormStart() {
+     * Creates new form ShopForm, redirects os to doc
+     */  
+    public ShopForm() {
         //run generated code
         initComponents();
         //set up log textarea
@@ -49,16 +66,22 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
     
     /**
     * Connect to the shop database (db name hardcoded)
+    * create thread for writing to db and entity repositories
     * @param usr username
     * @param pass password
     * @param port port
+    * @return true on success
     */ 
     public boolean connect(String usr, String pass, String port){
         try {
             DBconnection = ConnectionFactory.getConnection("javashopmodeldb", usr, pass, port);
+            System.out.print("connected to database as " + usr);
+            
             dbWrite = new DBwriteThread(DBconnection, queryStrQueue);
             dbWrite.start();
-            System.out.print("connected to database as " + usr);
+            
+            CliR = new ClientRepository(DBconnection, queryStrQueue);
+            
             return true;
         } catch (ClassNotFoundException ex) {
             System.out.print(ex.getMessage());
@@ -67,6 +90,62 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
             System.out.print(ex.getMessage());
             return false;
         }
+    }
+    
+    
+    //ENTITY OPERATIONS
+    public void pnlShopsEnter(){
+    
+    }
+    
+    public void pnlShopsExit(){
+    
+    }
+    
+    public void pnlProductsEnter(){
+    
+    }
+    
+    public void pnlProductsExit(){
+    
+    }
+    
+    public void pnlCheckoutEnter(){   
+        try {
+            //load Invoice panel
+            clients = CliR.GetAll(0, 1000);
+            for (Client c: clients){
+                cmbInvCname.addItem(c.clientId+": " +c.CompanyName +" - "+ c.Firstname);
+            }           
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+    }
+    
+    /**
+     * run when tab switched away from 'checkout'
+     * empty used vars and reset ui
+     */
+    public void pnlCheckoutExit(){
+        //Invoice panel
+        if(chkInvoice.isSelected())
+            chkInvoice.doClick(); //triggers the action event listener
+        //reset combobox
+        cmbInvCname.removeAllItems();
+        cmbInvCname.addItem("New Client");
+        //we'll be reloading these try to free memory while not in use
+        clients.clear();
+    }
+    
+    /**
+     * Display client information in the relevant ui textfields
+     * @param c client to load
+     */
+    private void loadClient(Client c){
+        txtInvCname.setText(c.CompanyName);
+        txtInvFname.setText(c.Firstname);
+        txtInvLname.setText(c.Lastname);
+        txtInvEIK.setText(c.Eik);
     }
     
     //UI HELPER FUNCTIONS
@@ -92,6 +171,18 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
         for (Component c : pnl.getComponents()){
             c.setEnabled(enabled);
         }
+    }
+    
+    /**
+     * Clear all textfields in a panel
+     * @patam pnl panel to be cleared
+     */
+    private void clearTxts(JPanel pnl){
+       for (Component c : pnl.getComponents()){
+           if (c instanceof JTextField){
+               ((JTextField) c).setText("");
+           }
+       }
     }
     
     @Override
@@ -173,7 +264,7 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
         chkInvoice = new javax.swing.JCheckBox();
         btnCheckDel = new javax.swing.JButton();
         txtCheckNum = new javax.swing.JTextField();
-        jButton1 = new javax.swing.JButton();
+        btnCheckDone = new javax.swing.JButton();
         pnlInvoice = new javax.swing.JPanel();
         jLabel16 = new javax.swing.JLabel();
         cmbInvCname = new javax.swing.JComboBox<>();
@@ -184,6 +275,7 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
         txtInvFname = new javax.swing.JTextField();
         jLabel19 = new javax.swing.JLabel();
         txtInvLname = new javax.swing.JTextField();
+        txtCheckProdId = new javax.swing.JTextField();
         pnlReports = new javax.swing.JPanel();
         jLabel20 = new javax.swing.JLabel();
         cmbRepShop = new javax.swing.JComboBox<>();
@@ -224,6 +316,12 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
         txtLog.setRows(5);
         txtLog.setDisabledTextColor(new java.awt.Color(0, 0, 0));
         jScrollPane1.setViewportView(txtLog);
+
+        tbtMain.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                tbtMainStateChanged(evt);
+            }
+        });
 
         lstShops.setModel(new javax.swing.AbstractListModel<String>() {
             String[] strings = { "Item 1", "Item 2", "Item 3", "Item 4", "Item 5" };
@@ -659,16 +757,26 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
 
         txtCheckNum.setText("1");
 
-        jButton1.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
-        jButton1.setText("Done");
+        btnCheckDone.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
+        btnCheckDone.setText("Done");
+        btnCheckDone.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnCheckDoneActionPerformed(evt);
+            }
+        });
 
         pnlInvoice.setBorder(javax.swing.BorderFactory.createTitledBorder("Invoice"));
 
         jLabel16.setText("Company");
         jLabel16.setEnabled(false);
 
-        cmbInvCname.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        cmbInvCname.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "New Client" }));
         cmbInvCname.setEnabled(false);
+        cmbInvCname.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbInvCnameActionPerformed(evt);
+            }
+        });
 
         txtInvCname.setEnabled(false);
 
@@ -701,7 +809,7 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(pnlInvoiceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(txtInvCname)
-                            .addComponent(cmbInvCname, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(cmbInvCname, 0, 170, Short.MAX_VALUE)
                             .addComponent(txtInvEIK)))
                     .addGroup(pnlInvoiceLayout.createSequentialGroup()
                         .addContainerGap()
@@ -747,48 +855,57 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
             pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnlCheckoutLayout.createSequentialGroup()
                 .addContainerGap()
+                .addGroup(pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                    .addComponent(tblSP, javax.swing.GroupLayout.PREFERRED_SIZE, 294, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(pnlCheckoutLayout.createSequentialGroup()
+                        .addComponent(txtCheckProdId)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(cmbCheckProd, javax.swing.GroupLayout.PREFERRED_SIZE, 193, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addGroup(pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(pnlCheckoutLayout.createSequentialGroup()
-                        .addComponent(cmbCheckProd, javax.swing.GroupLayout.PREFERRED_SIZE, 193, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(txtCheckNum, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnCheckAdd)
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(pnlInvoice, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(pnlCheckoutLayout.createSequentialGroup()
-                        .addComponent(tblSP, javax.swing.GroupLayout.PREFERRED_SIZE, 294, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGroup(pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(pnlCheckoutLayout.createSequentialGroup()
-                                .addGap(68, 68, 68)
-                                .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 115, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(0, 88, Short.MAX_VALUE))
+                                .addGap(18, 18, 18)
+                                .addGroup(pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                    .addGroup(pnlCheckoutLayout.createSequentialGroup()
+                                        .addComponent(txtCheckNum, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGap(28, 28, 28)
+                                        .addComponent(btnCheckAdd, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addGroup(pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addComponent(chkInvoice)
+                                        .addComponent(btnCheckDel))))
                             .addGroup(pnlCheckoutLayout.createSequentialGroup()
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(chkInvoice)
-                                    .addComponent(btnCheckDel)
-                                    .addComponent(pnlInvoice, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))))))
+                                .addGap(68, 68, 68)
+                                .addComponent(btnCheckDone, javax.swing.GroupLayout.PREFERRED_SIZE, 115, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(0, 0, Short.MAX_VALUE))))
         );
         pnlCheckoutLayout.setVerticalGroup(
             pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnlCheckoutLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(cmbCheckProd, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(btnCheckAdd)
-                    .addComponent(txtCheckNum, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(cmbCheckProd, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGroup(pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(txtCheckNum, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(txtCheckProdId, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addComponent(btnCheckAdd))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                     .addComponent(tblSP, javax.swing.GroupLayout.PREFERRED_SIZE, 312, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(pnlCheckoutLayout.createSequentialGroup()
                         .addComponent(btnCheckDel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(chkInvoice)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(pnlInvoice, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 57, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(chkInvoice)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(pnlInvoice, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btnCheckDone, javax.swing.GroupLayout.PREFERRED_SIZE, 57, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(5, 5, 5)))
+                .addContainerGap(37, Short.MAX_VALUE))
         );
 
         tbtMain.addTab("Checkout", pnlCheckout);
@@ -1043,7 +1160,8 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
-
+    //END GENERATED INIT CODE
+    
     //Login pressed
     private void btnLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLoginActionPerformed
         boolean connectionSuccess = connect(txtUser.getText(), 
@@ -1055,6 +1173,7 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
             mnuUserGrp.setEnabled(true);
             mnuCommit.setEnabled(true);
             swapLayers(lpMain, pnlLogin, tbtMain);
+            loggedIn = true;
         }
     }//GEN-LAST:event_btnLoginActionPerformed
 
@@ -1062,6 +1181,7 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
         mnuUserGrp.setEnabled(false);
         mnuCommit.setEnabled(false);
         swapLayers(lpMain, pnlLogin, tbtMain);
+        loggedIn = false;
         System.out.print("logged out");
     }//GEN-LAST:event_mnuLogoutActionPerformed
 
@@ -1071,6 +1191,7 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
 
     private void chkInvoiceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkInvoiceActionPerformed
         setEnabledPanel(pnlInvoice, chkInvoice.isSelected());
+        cmbInvCname.setSelectedIndex(0);
     }//GEN-LAST:event_chkInvoiceActionPerformed
 
     private void chkRepInvActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkRepInvActionPerformed
@@ -1081,6 +1202,56 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
         //TODO add code
     }//GEN-LAST:event_mnuSaveLogActionPerformed
 
+    private void tbtMainStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_tbtMainStateChanged
+        if(loggedIn){
+           //leaving panel
+           switch(focusedTab){
+               case PNL_SHOPS: pnlShopsExit(); break;
+               case PNL_PRODUCTS: pnlProductsExit(); break;
+               case PNL_CHECKOUT: pnlCheckoutExit(); break;
+           }
+           
+           //entering panel
+           focusedTab = tbtMain.getSelectedIndex();
+           switch(focusedTab){
+               case PNL_SHOPS: pnlShopsEnter(); break;
+               case PNL_PRODUCTS: pnlProductsEnter(); break;
+               case PNL_CHECKOUT: pnlCheckoutEnter(); break;
+           }
+        }
+    }//GEN-LAST:event_tbtMainStateChanged
+
+    private void cmbInvCnameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbInvCnameActionPerformed
+        int selected =  cmbInvCname.getSelectedIndex();
+        if (selected > 0){ //selected existing company
+            loadClient(clients.get(selected-1));
+        } else { //selected 'new company'
+            clearTxts(pnlInvoice);
+        }
+    }//GEN-LAST:event_cmbInvCnameActionPerformed
+
+    private void btnCheckDoneActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCheckDoneActionPerformed
+        if (chkInvoice.isSelected()){
+            int selected =  cmbInvCname.getSelectedIndex();
+            //new client to add
+            if (selected == 0){
+                CliR.Insert(
+                        txtInvEIK.getText(),
+                        txtInvFname.getText(),
+                        txtInvLname.getText(),
+                        txtInvCname.getText()
+                );
+            } else {
+                Client currentC = clients.get(selected-1);
+                currentC.Eik = txtInvEIK.getText();
+                currentC.Firstname = txtInvFname.getText();
+                currentC.Lastname = txtInvLname.getText();
+                currentC.CompanyName = txtInvCname.getText();
+                CliR.Update(currentC);
+            }
+        }
+    }//GEN-LAST:event_btnCheckDoneActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton bntRepGet;
     private javax.swing.JButton btnCatDelete;
@@ -1088,6 +1259,7 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
     private javax.swing.JButton btnCatUpdate;
     private javax.swing.JButton btnCheckAdd;
     private javax.swing.JButton btnCheckDel;
+    private javax.swing.JButton btnCheckDone;
     private javax.swing.JButton btnEmpDelete;
     private javax.swing.JButton btnEmpNew;
     private javax.swing.JButton btnEmpUpdate;
@@ -1106,7 +1278,6 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
     private javax.swing.JComboBox<String> cmbInvCname;
     private javax.swing.JComboBox<String> cmbRepEmp;
     private javax.swing.JComboBox<String> cmbRepShop;
-    private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
@@ -1168,6 +1339,7 @@ public class FormStart extends javax.swing.JFrame implements Runnable {
     private javax.swing.JTextField txtCatId;
     private javax.swing.JTextField txtCatName;
     private javax.swing.JTextField txtCheckNum;
+    private javax.swing.JTextField txtCheckProdId;
     private javax.swing.JTextField txtEmpKey;
     private javax.swing.JTextField txtEmpName1;
     private javax.swing.JTextField txtEmpName2;
