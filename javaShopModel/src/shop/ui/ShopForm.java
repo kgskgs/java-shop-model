@@ -12,14 +12,14 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import javax.swing.ComboBoxModel;
 import javax.swing.JLayeredPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import shop.db.ConnectionFactory;
 import shop.db.DBwriteThread;
+import shop.infrastructure.interfaces.IRepository;
+import shop.infrastructure.MySqlRepository;
 import shop.models.Client;
-import shop.models.ClientRepository;
 
 /**
  * 
@@ -43,9 +43,8 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     
     //model entities
     //invoice
-    ClientRepository CliR;
     ArrayList<Client> clients;
-    
+    IRepository<Client> clientRepository;
  
     /**
      * Creates new form ShopForm, redirects os to doc
@@ -58,7 +57,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         //System.setOut(os);
         //System.setErr(os);
         //set up database connection vars
-        queryStrQueue = new LinkedBlockingQueue<String>();
+        queryStrQueue = new LinkedBlockingQueue<>();  
         
         System.out.print("started");
     }
@@ -80,13 +79,10 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
             dbWrite = new DBwriteThread(DBconnection, queryStrQueue);
             dbWrite.start();
             
-            CliR = new ClientRepository(DBconnection, queryStrQueue);
+            clientRepository = new MySqlRepository<>(Client.class, DBconnection, queryStrQueue);
             
             return true;
-        } catch (ClassNotFoundException ex) {
-            System.out.print(ex.getMessage());
-            return false;
-        } catch (SQLException ex) {
+        } catch (ClassNotFoundException | SQLException ex) {
             System.out.print(ex.getMessage());
             return false;
         }
@@ -111,15 +107,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     }
     
     public void pnlCheckoutEnter(){   
-        try {
-            //load Invoice panel
-            clients = CliR.GetAll(0, 1000);
-            for (Client c: clients){
-                cmbInvCname.addItem(c.clientId+": " +c.CompanyName +" - "+ c.Firstname);
-            }           
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-        }
+        
     }
     
     /**
@@ -142,10 +130,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
      * @param c client to load
      */
     private void loadClient(Client c){
-        txtInvCname.setText(c.CompanyName);
-        txtInvFname.setText(c.Firstname);
-        txtInvLname.setText(c.Lastname);
-        txtInvEIK.setText(c.Eik);
+        
     }
     
     //UI HELPER FUNCTIONS
@@ -1231,25 +1216,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     }//GEN-LAST:event_cmbInvCnameActionPerformed
 
     private void btnCheckDoneActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCheckDoneActionPerformed
-        if (chkInvoice.isSelected()){
-            int selected =  cmbInvCname.getSelectedIndex();
-            //new client to add
-            if (selected == 0){
-                CliR.Insert(
-                        txtInvEIK.getText(),
-                        txtInvFname.getText(),
-                        txtInvLname.getText(),
-                        txtInvCname.getText()
-                );
-            } else {
-                Client currentC = clients.get(selected-1);
-                currentC.Eik = txtInvEIK.getText();
-                currentC.Firstname = txtInvFname.getText();
-                currentC.Lastname = txtInvLname.getText();
-                currentC.CompanyName = txtInvCname.getText();
-                CliR.Update(currentC);
-            }
-        }
+        
     }//GEN-LAST:event_btnCheckDoneActionPerformed
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
