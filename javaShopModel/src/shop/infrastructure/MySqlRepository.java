@@ -3,30 +3,36 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package shop.infrastructure.interfaces;
+package shop.infrastructure;
 
+import shop.infrastructure.interfaces.Key;
+import shop.infrastructure.interfaces.Table;
 import java.lang.reflect.*;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.concurrent.BlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import shop.infrastructure.Key;
+import shop.infrastructure.*;
+import shop.infrastructure.interfaces.IRepository;
 
 /**
  * @author Lyuboslav
  * @param <T> is db model
  */
-public abstract class Repository<T> implements IRepository<T> {
+public class MySqlRepository<T> implements IRepository<T> {
     
     protected Class<T> modelClass;
     private final Connection sqlConnection;
+    private final BlockingQueue<String> sqlQueue;
     
-    protected Repository(Class<T> modelClass, Connection sqlConnection){
+    public MySqlRepository(Class<T> modelClass, Connection sqlConnection, BlockingQueue<String> sqlQueue){
         this.modelClass = modelClass;
         this.sqlConnection = sqlConnection;
+        this.sqlQueue = sqlQueue;
     }
     
     protected T createFromCurrentLine(ResultSet set) throws SQLException{
@@ -51,25 +57,26 @@ public abstract class Repository<T> implements IRepository<T> {
             
             return modelObj;
         } catch (InstantiationException | IllegalAccessException ex) {
-            Logger.getLogger(Repository.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(MySqlRepository.class.getName()).log(Level.SEVERE, null, ex);
             return null;
         }
     }
     
-    protected T[] getAllAndBind(int page, int count){
+    @Override
+    public T[] GetAll(int page, int count){
         try {
             //"SELECT * FROM {table} LIMIT " + count + " OFFSET " + offset + ";"
             int offset = page * count;
             StringBuilder sqlBuilder = new StringBuilder();
             
             sqlBuilder.append("Select FROM ")
-                    .append(modelClass.getName().toLowerCase())
-                    .append("s ")
-                    .append("LIMIT ")
-                    .append(count)
-                    .append(" OFFSET ")
-                    .append(offset)
-                    .append(";");
+                .append(modelClass.getName().toLowerCase())
+                .append("s ")
+                .append("LIMIT ")
+                .append(count)
+                .append(" OFFSET ")
+                .append(offset)
+                .append(";");
             
             ResultSet set = sqlConnection.createStatement().executeQuery(sqlBuilder.toString());
             
@@ -81,12 +88,13 @@ public abstract class Repository<T> implements IRepository<T> {
             }
             return (T[])resultList.toArray();
         } catch (SQLException ex) {
-            Logger.getLogger(Repository.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(MySqlRepository.class.getName()).log(Level.SEVERE, null, ex);
             return null;
         }
     }
     
-    protected T getAndBind(int id){       
+    @Override
+    public T Get(int id){       
         try {
             StringBuilder sqlBuilder = new StringBuilder();
             
@@ -106,9 +114,8 @@ public abstract class Repository<T> implements IRepository<T> {
             }
             
             sqlBuilder.append("Select FROM ")
-                    .append(modelClass.getName().toLowerCase())
-                    .append("s ")
-                    .append("WHERE ")
+                    .append(modelClass.getAnnotation(Table.class).Name())
+                    .append(" WHERE ")
                     .append(keyField.getName())
                     .append(" = '")
                     .append(id)
@@ -122,13 +129,14 @@ public abstract class Repository<T> implements IRepository<T> {
             
             return createFromCurrentLine(set);
         } catch (SQLException ex) {
-            Logger.getLogger(Repository.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(MySqlRepository.class.getName()).log(Level.SEVERE, null, ex);
             return null;
         }
     }
     
-    protected void executeInsert(T model){
-        try {
+    @Override
+    public void Insert(T model) throws IllegalAccessException{
+        
             /*"INSERT INTO clients VALUES (" +
             c.Eik + "," +
             c.Firstname + "," +
@@ -138,53 +146,54 @@ public abstract class Repository<T> implements IRepository<T> {
             StringBuilder sqlBuilder = new StringBuilder();
             
             sqlBuilder.append("INSERT INTO ")
-                    .append(modelClass.getName().toLowerCase())
-                    .append("s ")
-                    .append("VALUES {");
+                .append(modelClass.getAnnotation(Table.class).Name())
+                .append(" VALUES { ");
             
             for (Field f : modelClass.getDeclaredFields() ){
-                sqlBuilder.append(f.get(model).toString()).append(",");                
-            }
-            sqlBuilder.deleteCharAt(sqlBuilder.length()).append(");");
-            
-            sqlConnection.createStatement().execute(sqlBuilder.toString());
-        } catch (SQLException | IllegalArgumentException | IllegalAccessException ex) {
-            Logger.getLogger(Repository.class.getName()).log(Level.SEVERE, null, ex);
-        }        
-    }
-
-    protected void executeDelete(int id){
-        try {
-            // "DELETE FROM clients WHERE eik = '" + c.Eik + "';";
-            StringBuilder sqlBuilder = new StringBuilder();
-            
-            Field keyField = null;
-            Field[] fields = modelClass.getDeclaredFields();
-            
-            for (Field f : fields ) {
                 if (f.isAnnotationPresent(Key.class)) {
-                    keyField = f;
-                    break;
+                    sqlBuilder.append("NULL,");
+                }
+                else{
+                    sqlBuilder.append("\"")
+                        .append(f.get(model).toString())
+                        .append("\"")
+                        .append(",");   
                 }
             }
-            
-            if (keyField == null) {
-                System.out.println("Primary key not set for " + modelClass.getName());
-                return;
+            sqlBuilder.deleteCharAt(sqlBuilder.length()).append(");");            
+            sqlQueue.offer(sqlBuilder.toString());              
+    }
+
+    @Override
+    public void Delete(int id) {
+        // "DELETE FROM clients WHERE eik = '" + c.Eik + "';";
+        StringBuilder sqlBuilder = new StringBuilder();
+        Field keyField = null;
+        Field[] fields = modelClass.getDeclaredFields();
+        for (Field f : fields ) {
+            if (f.isAnnotationPresent(Key.class)) {
+                keyField = f;
+                break;
             }
-            
-            sqlBuilder.append("DELETE FROM ")
-                    .append(modelClass.getName().toLowerCase())
-                    .append("s ")
-                    .append("WHERE ")
-                    .append(keyField.getName())
-                    .append(" = '")
-                    .append(id)
-                    .append("';");
-            
-            sqlConnection.createStatement().execute(sqlBuilder.toString());
-        } catch (SQLException ex) {
-            Logger.getLogger(Repository.class.getName()).log(Level.SEVERE, null, ex);
         }
+        if (keyField == null) {
+            System.out.println("Primary key not set for " + modelClass.getName());
+            return;
+        }
+        
+        sqlBuilder.append("DELETE FROM ")
+                .append(modelClass.getAnnotation(Table.class).Name())
+                .append(" WHERE ")
+                .append(keyField.getName())
+                .append(" = ")
+                .append(id)
+                .append(";");
+        
+        sqlQueue.offer(sqlBuilder.toString());
+    }
+
+    @Override
+    public void Update(T model) {
+        
     }
 }

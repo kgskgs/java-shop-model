@@ -5,14 +5,14 @@
  */
 package shop.infrastructure.interfaces;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+
 /**
  *
  * @author Lyuboslav
  */
-public interface IRepository<T> {    
-    public T[] GetAll(int page, int count);
-    public T Get(int key);
-    public void Insert(T model) throws IllegalAccessException;
-    public void Update(T model);
-    public void Delete(int id);
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Table {
+    public String Name();
 }

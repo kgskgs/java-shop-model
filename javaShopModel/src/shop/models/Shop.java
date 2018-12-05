@@ -5,11 +5,16 @@
  */
 package shop.models;
 
+import shop.infrastructure.interfaces.Key;
+import shop.infrastructure.interfaces.Table;
+
 /**
  *
  * @author Lyuboslav
  */
+@Table(Name = "shops")
 public class Shop {
+    @Key
     public int shopId;
     public String shopName;
     public String address;

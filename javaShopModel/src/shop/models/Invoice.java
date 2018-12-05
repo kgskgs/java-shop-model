@@ -5,16 +5,21 @@
  */
 package shop.models;
 import java.util.Date;
+import shop.infrastructure.interfaces.Key;
+import shop.infrastructure.interfaces.Table;
 
 /**
  *
  * @author Lyuboslav
  */
+@Table(Name = "invoices")
 public class Invoice {
+    @Key
     public int invoiceId;
     public String shopEik;
     public Date orderDate;
 }
+
 /*
 CREATE TABLE invoices
 (

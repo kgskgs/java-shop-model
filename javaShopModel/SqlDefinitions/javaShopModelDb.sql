@@ -18,7 +18,7 @@ CREATE TABLE shops
     shopId      INT unsigned NOT NULL AUTO_INCREMENT,
     shopName    VARCHAR(150) NOT NULL,
     address     VARCHAR(150) NOT NULL,
-    PRIMARY KEY (shopName)
+    PRIMARY KEY (shopId)
 );
 
 CREATE TABLE invoices
@@ -32,14 +32,15 @@ CREATE TABLE invoices
 
 CREATE TABLE employees
 (
-    employeeId  VARCHAR(32), /*same as mysql username*/ 
+	employeeId  INT unsigned NOT NULL AUTO_INCREMENT,
+    username    VARCHAR(32), /*same as mysql username*/ 
     firstname   VARCHAR(150) NOT NULL,
     lastname    VARCHAR(150) NOT NULL,
     accessLvl   TINYINT(1) unsigned NOT NULL,
     active      TINYINT(1) unsigned NOT NULL, /*we can't drop people who are not working anymore*/ 
-    shopName    VARCHAR(150) NOT NULL,
+    shopId      INT unsigned NOT NULL,
     PRIMARY KEY (employeeId),
-    FOREIGN KEY (shopName) REFERENCES shops(shopName)
+    FOREIGN KEY (shopId) REFERENCES shops(shopId)
 );
 
 CREATE TABLE productCategories
@@ -65,7 +66,7 @@ CREATE TABLE receipts
     receiptId       INT unsigned NOT NULL AUTO_INCREMENT, 
     invoice         TINYINT(1) unsigned NOT NULL, 
     invoiceId       INT unsigned,
-    employeeId      VARCHAR(32),
+    employeeId      INT unsigned,
     buyDate         TIMESTAMP NOT NULL,
     PRIMARY KEY     (receiptId),
     FOREIGN KEY     (invoiceId)  REFERENCES invoices(invoiceId),

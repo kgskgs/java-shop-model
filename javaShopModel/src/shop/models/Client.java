@@ -5,18 +5,23 @@
  */
 package shop.models;
 
+import shop.infrastructure.interfaces.Key;
+import shop.infrastructure.interfaces.Table;
+import shop.infrastructure.*;
+
 /**
  *
  * @author Lyuboslav
  */
+@Table(Name = "clients")
 public class Client{
-    //DB data fields
+    @Key
     public int clientId;
     public String eik;
     public String firstname;
     public String lastname;
     public String companyName;
-    public int clientId;
+
 }
 
 /*CREATE TABLE clients

@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package shop.infrastructure;
+package shop.infrastructure.interfaces;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
