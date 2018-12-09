@@ -14,14 +14,27 @@ import shop.infrastructure.*;
  * @author Lyuboslav
  */
 @Table(Name = "clients")
-public class Client{
+public class Client extends Model {
+
+    
     @Key
     public int clientId;
     public String eik;
     public String firstname;
     public String lastname;
     public String companyName;
+    
+    public Client(String eik, String firstname, String lastname, String companyName) {
+        this.eik = eik;
+        this.firstname = firstname;
+        this.lastname = lastname;
+        this.companyName = companyName;
+    }
+    
+    public Client() {}
+    
 
+    
 }
 
 /*CREATE TABLE clients

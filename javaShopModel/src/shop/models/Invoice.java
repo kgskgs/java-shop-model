@@ -7,26 +7,35 @@ package shop.models;
 import java.util.Date;
 import shop.infrastructure.interfaces.Key;
 import shop.infrastructure.interfaces.Table;
+import shop.infrastructure.interfaces.Timestamp;
 
 /**
  *
  * @author Lyuboslav
  */
 @Table(Name = "invoices")
-public class Invoice {
+public class Invoice extends Model{
     @Key
     public int invoiceId;
-    public String shopEik;
-    public Date orderDate;
+    public int clientId;
+    @Timestamp //in case we want automatic timestamp
+    public String orderDate;
+
+    public Invoice(int clientId, String orderDate) {
+        this.clientId = clientId;
+        this.orderDate = orderDate;
+    }
+    
+    public Invoice() {}
 }
 
 /*
 CREATE TABLE invoices
 (
     invoiceId   INT unsigned NOT NULL AUTO_INCREMENT,
-    eik    		VARCHAR(15) NULL,
-    orderDate   TIMESTAMP NOT NULL,
+    clientId    INT unsigned NOT NULL,
+    orderDate   TIMESTAMP,
     PRIMARY KEY (invoiceId),
-    FOREIGN KEY (eik) REFERENCES clients(eik)    
+    FOREIGN KEY (clientId) REFERENCES clients(clientId)    
 );
 */

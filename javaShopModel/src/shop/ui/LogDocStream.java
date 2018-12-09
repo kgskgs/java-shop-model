@@ -15,7 +15,9 @@ import javax.swing.text.Document;
 import javax.swing.SwingUtilities;
 
 /**
- *
+ * This stream will print to a JTextArea
+ * adds a timestamp
+ * used for the log in ShopForm
  * @author k
  */
 public class LogDocStream extends OutputStream{

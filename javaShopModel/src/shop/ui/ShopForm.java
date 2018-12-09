@@ -9,6 +9,9 @@ import java.awt.Component;
 import java.io.PrintStream;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -17,9 +20,8 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import shop.db.ConnectionFactory;
 import shop.db.DBwriteThread;
-import shop.infrastructure.interfaces.IRepository;
 import shop.infrastructure.MySqlRepository;
-import shop.models.Client;
+import shop.models.*;
 
 /**
  * 
@@ -37,6 +39,8 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     private Connection DBconnection;
     DBwriteThread dbWrite;
     
+    private DateTimeFormatter DBtimeFormat;
+    
     //internal flags
     private boolean loggedIn = false;
     private int focusedTab = 0;
@@ -44,7 +48,8 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     //model entities
     //invoice
     ArrayList<Client> clients;
-    IRepository<Client> clientRepository;
+    MySqlRepository<Client> clientRepository;
+    MySqlRepository<Invoice> invoiceRepository;
  
     /**
      * Creates new form ShopForm, redirects os to doc
@@ -58,6 +63,8 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         //System.setErr(os);
         //set up database connection vars
         queryStrQueue = new LinkedBlockingQueue<>();  
+        
+        DBtimeFormat = DateTimeFormatter.ofPattern("YYYY-MM-dd HH:mm:ss");
         
         System.out.print("started");
     }
@@ -80,6 +87,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
             dbWrite.start();
             
             clientRepository = new MySqlRepository<>(Client.class, DBconnection, queryStrQueue);
+            invoiceRepository = new MySqlRepository<>(Invoice.class, DBconnection, queryStrQueue);
             
             return true;
         } catch (ClassNotFoundException | SQLException ex) {
@@ -99,7 +107,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     }
     
     public void pnlProductsEnter(){
-    
+
     }
     
     public void pnlProductsExit(){
@@ -107,7 +115,17 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     }
     
     public void pnlCheckoutEnter(){   
-        
+        //load invoice panel
+        try {
+            clients = clientRepository.GetAll(0, 1000, false);
+
+            for (Client c: clients){
+                cmbInvCname.addItem(c.clientId+": " +c.companyName +" - "+ c.firstname);
+            }  
+            
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
     }
     
     /**
@@ -116,13 +134,24 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
      */
     public void pnlCheckoutExit(){
         //Invoice panel
+        //ui
         if(chkInvoice.isSelected())
             chkInvoice.doClick(); //triggers the action event listener
         //reset combobox
         cmbInvCname.removeAllItems();
         cmbInvCname.addItem("New Client");
+        
+        //update entities
+        for (Client c : clients) {
+            if (c.isNewInstance())
+                clientRepository.Insert(c);
+            else if (c.isUpdated())
+                clientRepository.Update(c);
+        }
         //we'll be reloading these try to free memory while not in use
         clients.clear();
+        
+
     }
     
     /**
@@ -130,7 +159,10 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
      * @param c client to load
      */
     private void loadClient(Client c){
-        
+        txtInvCname.setText(c.companyName);
+        txtInvFname.setText(c.firstname);
+        txtInvLname.setText(c.lastname);
+        txtInvEIK.setText(c.eik);
     }
     
     //UI HELPER FUNCTIONS
@@ -160,7 +192,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     
     /**
      * Clear all textfields in a panel
-     * @patam pnl panel to be cleared
+     * @param pnl panel to be cleared
      */
     private void clearTxts(JPanel pnl){
        for (Component c : pnl.getComponents()){
@@ -1187,6 +1219,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         //TODO add code
     }//GEN-LAST:event_mnuSaveLogActionPerformed
 
+    /*when tabs are changed call the appropriate manager functions*/
     private void tbtMainStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_tbtMainStateChanged
         if(loggedIn){
            //leaving panel
@@ -1216,9 +1249,52 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     }//GEN-LAST:event_cmbInvCnameActionPerformed
 
     private void btnCheckDoneActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCheckDoneActionPerformed
-        
+        //invoice checked
+        if (chkInvoice.isSelected()){
+            //clients
+            int selected =  cmbInvCname.getSelectedIndex();
+            Client tmpClient;
+            Invoice inv;
+            int newInvoiceKey;
+
+            if (selected == 0){ //add new client
+                int newClientKey;
+                
+                tmpClient = new Client(txtInvEIK.getText(), 
+                        txtInvFname.getText(), 
+                        txtInvLname.getText(), 
+                        txtInvCname.getText());
+
+                //tmpClient.setNewInstance(true); - inserting immediately
+                clients.add(tmpClient);
+                
+                newClientKey = clientRepository.InsertGetKey(tmpClient);
+                tmpClient.clientId = newClientKey;
+                
+                cmbInvCname.addItem(newClientKey + ": " + tmpClient.companyName +" - "+ tmpClient.firstname);
+            } else { //update existing client
+                tmpClient = clients.get(selected - 1); //-1 since first item is 'new'
+                tmpClient.eik = txtInvEIK.getText();
+                tmpClient.firstname = txtInvFname.getText();
+                tmpClient.lastname = txtInvLname.getText();
+                tmpClient.companyName = txtInvCname.getText();
+                tmpClient.setUpdated(true);
+            }
+            //invoice
+            String timestamp = LocalDateTime.now().format(DBtimeFormat);
+            
+            inv = new Invoice(tmpClient.clientId, timestamp);
+            
+            newInvoiceKey = invoiceRepository.InsertGetKey(inv);
+            inv.invoiceId = newInvoiceKey;
+            
+            //resest UI 
+            chkInvoice.doClick();
+            clearTxts(pnlInvoice);
+        }
     }//GEN-LAST:event_btnCheckDoneActionPerformed
 
+    //<editor-fold defaultstate="collapsed" desc="autogenreated variables">
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton bntRepGet;
     private javax.swing.JButton btnCatDelete;
@@ -1327,5 +1403,5 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     private javax.swing.JTextField txtShopName;
     private javax.swing.JTextField txtUser;
     // End of variables declaration//GEN-END:variables
-
+    //</editor-fold>
 }

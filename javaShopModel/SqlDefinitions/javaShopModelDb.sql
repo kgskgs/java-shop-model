@@ -25,14 +25,14 @@ CREATE TABLE invoices
 (
     invoiceId   INT unsigned NOT NULL AUTO_INCREMENT,
     clientId    INT unsigned NOT NULL,
-    orderDate   TIMESTAMP NOT NULL,
+    orderDate   TIMESTAMP,
     PRIMARY KEY (invoiceId),
     FOREIGN KEY (clientId) REFERENCES clients(clientId)    
 );
 
 CREATE TABLE employees
 (
-	employeeId  INT unsigned NOT NULL AUTO_INCREMENT,
+    employeeId  INT unsigned NOT NULL AUTO_INCREMENT,
     username    VARCHAR(32), /*same as mysql username*/ 
     firstname   VARCHAR(150) NOT NULL,
     lastname    VARCHAR(150) NOT NULL,
@@ -67,7 +67,7 @@ CREATE TABLE receipts
     invoice         TINYINT(1) unsigned NOT NULL, 
     invoiceId       INT unsigned,
     employeeId      INT unsigned,
-    buyDate         TIMESTAMP NOT NULL,
+    buyDate         TIMESTAMP,
     PRIMARY KEY     (receiptId),
     FOREIGN KEY     (invoiceId)  REFERENCES invoices(invoiceId),
     FOREIGN KEY     (employeeId) REFERENCES employees(employeeId)
