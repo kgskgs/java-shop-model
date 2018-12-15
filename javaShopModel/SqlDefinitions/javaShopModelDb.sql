@@ -47,6 +47,7 @@ CREATE TABLE productCategories
 (
     productCategoriyId  INT unsigned NOT NULL AUTO_INCREMENT,
     categoryName        VARCHAR(150) NOT NULL,
+    description         TEXT NULL,
     PRIMARY KEY         (productCategoriyId)
 );
 
@@ -54,9 +55,10 @@ CREATE TABLE products
 (
     productId       INT unsigned NOT NULL AUTO_INCREMENT,
     productName     VARCHAR(150) NOT NULL,
-    price           DECIMAL NOT NULL,
+    price           DECIMAL(13,2) NOT NULL, /*max double ~16 digits, leaving 3 extra*/
     categoryId      INT unsigned NOT NULL,
     active          TINYINT(1) unsigned NOT NULL, /*we can't drop deleted products*/
+    description     TEXT NULL,
     PRIMARY KEY     (productId),
     FOREIGN KEY     (categoryId) REFERENCES productCategories(productCategoriyId)    
 );
@@ -78,7 +80,7 @@ CREATE TABLE boughtProducts
     productId               INT unsigned NOT NULL,
     receiptId               INT unsigned NOT NULL,
     productCount            INT NOT NULL,
-    currentPrice            DECIMAL NOT NULL,
+    currentPrice            DECIMAL(13,2) NOT NULL,
     FOREIGN KEY (productId) REFERENCES products(productId),
     FOREIGN KEY (receiptId) REFERENCES receipts(receiptId)
 );

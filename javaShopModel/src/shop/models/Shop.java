@@ -18,6 +18,16 @@ public class Shop {
     public int shopId;
     public String shopName;
     public String address;
+
+    public Shop(String shopName, String address) {
+        this.shopName = shopName;
+        this.address = address;
+    }
+
+    public Shop() {
+    }
+    
+    
 }
 
 /*CREATE TABLE shops

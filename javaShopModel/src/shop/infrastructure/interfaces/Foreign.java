@@ -7,12 +7,13 @@ package shop.infrastructure.interfaces;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.util.Comparator;
 
 /**
- * name of the mysql table associated with the model
- * @author Lyuboslav
+ * foreign key that will be used for splitting lists of models
+ * @author k
  */
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Table {
-    public String Name();
+public @interface Foreign {
+    public Class comparator();
 }

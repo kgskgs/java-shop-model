@@ -85,7 +85,7 @@ public class MySqlRepository<T> implements IRepository<T> {
             .append(offset)
             .append(";");
 
-        //System.out.println(sqlBuilder.toString());
+        System.out.println(sqlBuilder.toString());
         ResultSet set = state.executeQuery(sqlBuilder.toString());
 
         ArrayList<T> resultList = new ArrayList<>();

@@ -9,7 +9,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /**
- *
+ * primary key field
  * @author Lyuboslav
  */
 @Retention(RetentionPolicy.RUNTIME)
