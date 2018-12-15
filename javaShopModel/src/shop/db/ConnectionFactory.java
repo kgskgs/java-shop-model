@@ -5,12 +5,9 @@
  */
 package shop.db;
 
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.Properties;
 /**
  *
  * @author Lyuboslav
@@ -21,7 +18,13 @@ public class ConnectionFactory {
         		
         //load the Driver Class
         //include ConnectorJ jar in Libraries
-        Class.forName("com.mysql.cj.jdbc.Driver");
+        String osname = System.getProperty("os.name");
+        System.err.println(osname);
+        
+        if (osname.equalsIgnoreCase("linux"))
+            Class.forName("com.mysql.jdbc.Driver");
+        else
+            Class.forName("com.mysql.cj.jdbc.Driver");
                 
         String conUrl = String.format("jdbc:mysql://localhost:%s/%s?"   //database url + port
                 + "verifyServerCertificate=false&useSSL=true&rewriteBatchedStatements=true", //connection options
