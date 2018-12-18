@@ -53,7 +53,7 @@ public class MySqlRepository<T> implements IRepository<T> {
                     f.set(modelObj, set.getString(fieldName));
                 }
                 else if (f.getType() == double.class) {
-                    f.set(modelObj, set.getString(fieldName));
+                    f.set(modelObj, set.getDouble(fieldName));
                 }
                 else if (f.getType() == Date.class) {
                     f.set(modelObj, set.getDate(fieldName));

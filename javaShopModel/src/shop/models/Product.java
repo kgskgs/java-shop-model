@@ -7,6 +7,7 @@ package shop.models;
 
 import shop.infrastructure.interfaces.Foreign;
 import shop.infrastructure.interfaces.Key;
+import shop.infrastructure.interfaces.Name;
 import shop.infrastructure.interfaces.Table;
 import shop.models.compare.ProdSortByCategory;
 
@@ -18,6 +19,7 @@ import shop.models.compare.ProdSortByCategory;
 public class Product extends Model {
     @Key
     public int productId;
+    @Name
     public String productName;
     public double price;
     @Foreign(comparator = ProdSortByCategory.class)

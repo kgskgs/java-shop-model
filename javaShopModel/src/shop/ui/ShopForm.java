@@ -12,7 +12,6 @@ import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import javax.swing.DefaultListModel;
@@ -20,10 +19,10 @@ import javax.swing.JLayeredPane;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.table.DefaultTableModel;
 import shop.db.*;
 import shop.infrastructure.MySqlRepository;
 import shop.models.*;
-import shop.models.compare.*;
 
 /**
  * 
@@ -60,7 +59,9 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     MySqlRepository<Product> prodRepository;
     //ui representations of models
     DefaultListModel<String> lstCatsM;
-    DefaultListModel<String> lstProdsM;
+    //DefaultListModel<String> lstProdsM;
+    //ListModelManager<Product> prodLstManager;
+    DefaultTableModel tblProdsM;
  
     /**
      * Creates new form ShopForm, redirects os to doc
@@ -69,8 +70,9 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         //run generated code
         initComponents();
         //get needed vars from generated code
-        this.lstProdsM = (DefaultListModel<String>) lstProds.getModel();
+        //this.lstProdsM = (DefaultListModel<String>) lstProds.getModel();
         this.lstCatsM = (DefaultListModel<String>) lstCats.getModel();
+        tblProdsM = (DefaultTableModel) tblProds.getModel();
         
         //set up log textarea
         PrintStream os = new PrintStream(new LogDocStream(txtLog.getDocument()), true);
@@ -126,7 +128,9 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     public void pnlProductsEnter(){
         try {
             lstCatsM.addElement("New Category");
-            lstProdsM.addElement("New Product");
+            //lstProdsM.addElement("New");
+            
+            //ArrayList<Integer> catKeys = new ArrayList<>();
             
             categories = catRepository.GetAll(0, 1000, false);
             products = prodRepository.GetAll(0, 1000, true);
@@ -134,7 +138,16 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
             
             for (Category c : categories) {
                 lstCatsM.addElement(c.productCategoriyId+" - " + c.categoryName);
+                //catKeys.add(c.productCategoriyId);
             }
+            
+            tblProdsM.addRow(new Object[] {-1, "New Product"});
+            
+            for (Product p : products){
+                tblProdsM.addRow(new Object[] {p.categoryId, p.productName});
+            }
+            
+            //prodLstManager = new ListModelManager<> (Product.class, products, catKeys);
             
         } catch (SQLException ex) {
             ex.printStackTrace();
@@ -181,8 +194,6 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         }
         //we'll be reloading these try to free memory while not in use
         clients.clear();
-        
-
     }
     
     /**
@@ -202,6 +213,12 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         txtCatDesc.setText(c.description);
     }
     
+    private void loadProduct(Product p){
+        txtProdName.setText(p.productName);
+        txtProdPrice.setText(String.valueOf(p.price));
+        txtProdDesc.setText(p.description);
+        txtProdId.setText(Integer.toString(p.productId));
+    }
     //UI HELPER FUNCTIONS
     /**
      * swap two components in the layered pane
@@ -289,7 +306,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         cmbEmpRank = new javax.swing.JComboBox<>();
         pnlProducts = new javax.swing.JPanel();
         jScrollPane4 = new javax.swing.JScrollPane();
-        lstProds = new javax.swing.JList<>();
+        tblProds = new javax.swing.JTable();
         jScrollPane5 = new javax.swing.JScrollPane();
         lstCats = new javax.swing.JList<>();
         jLabel9 = new javax.swing.JLabel();
@@ -316,7 +333,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         jLabel15 = new javax.swing.JLabel();
         txtProdId = new javax.swing.JTextField();
         jScrollPane7 = new javax.swing.JScrollPane();
-        txtCatDesc1 = new javax.swing.JTextArea();
+        txtProdDesc = new javax.swing.JTextArea();
         jLabel26 = new javax.swing.JLabel();
         pnlCheckout = new javax.swing.JPanel();
         tblSP = new javax.swing.JScrollPane();
@@ -581,9 +598,14 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
 
         tbtMain.addTab("Shops & Employees", pnlShops);
 
-        lstProds.setModel(new javax.swing.DefaultListModel<String>());
-        lstProds.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-        jScrollPane4.setViewportView(lstProds);
+        tblProds.setModel(new javax.swing.table.DefaultTableModel(0, 2));
+        tblProds.setAutoscrolls(false);
+        tblProds.setColumnSelectionAllowed(false);
+        tblProds.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        jScrollPane4.setViewportView(tblProds);
+        tblProds.setTableHeader(null);
+        javax.swing.table.TableColumnModel tcm = tblProds.getColumnModel();
+        tcm.removeColumn( tcm.getColumn(0) );
 
         lstCats.setModel(new javax.swing.DefaultListModel<String>());
         lstCats.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
@@ -681,10 +703,10 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
 
         txtProdId.setEnabled(false);
 
-        txtCatDesc1.setColumns(15);
-        txtCatDesc1.setRows(4);
-        txtCatDesc1.setAutoscrolls(false);
-        jScrollPane7.setViewportView(txtCatDesc1);
+        txtProdDesc.setColumns(15);
+        txtProdDesc.setRows(4);
+        txtProdDesc.setAutoscrolls(false);
+        jScrollPane7.setViewportView(txtProdDesc);
 
         jLabel26.setText("Description");
 
@@ -693,20 +715,23 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         pnlDetailProdLayout.setHorizontalGroup(
             pnlDetailProdLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnlDetailProdLayout.createSequentialGroup()
-                .addGroup(pnlDetailProdLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jLabel15)
+                .addGroup(pnlDetailProdLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel26, javax.swing.GroupLayout.PREFERRED_SIZE, 83, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel14)
-                    .addComponent(jLabel13))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(pnlDetailProdLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(txtProdId)
-                    .addComponent(jScrollPane7, javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(txtProdName)
-                    .addComponent(txtProdPrice, javax.swing.GroupLayout.Alignment.LEADING))
+                    .addGroup(pnlDetailProdLayout.createSequentialGroup()
+                        .addGap(23, 23, 23)
+                        .addGroup(pnlDetailProdLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jLabel15)
+                            .addComponent(jLabel14)
+                            .addComponent(jLabel13))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(pnlDetailProdLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(txtProdId, javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jScrollPane7)
+                            .addComponent(txtProdPrice)
+                            .addComponent(txtProdName))))
                 .addContainerGap())
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnlDetailProdLayout.createSequentialGroup()
-                .addGap(0, 0, Short.MAX_VALUE)
+                .addGap(0, 37, Short.MAX_VALUE)
                 .addComponent(btnProdUpdate)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(btnProdNew)
@@ -1362,10 +1387,12 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
             int selected = lstCats.getSelectedIndex();
             if (selected == 0){ //new category
                 clearTxts(pnlDetailsCat);
-                lstProds.setEnabled(false);
+                tblProds.setEnabled(false);
             } else {
                 loadCategory(categories.get(selected - 1));
-                lstProds.setEnabled(true);
+                tblProds.setEnabled(true);
+                
+                //tblProds.setModel(prodLstManager.getModel(selected-1));
             }
         }
     }//GEN-LAST:event_lstCatsValueChanged
@@ -1437,7 +1464,6 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     private javax.swing.JLayeredPane lpMain;
     private javax.swing.JList<String> lstCats;
     private javax.swing.JList<String> lstEmps;
-    private javax.swing.JList<String> lstProds;
     private javax.swing.JList<String> lstShops;
     private javax.swing.JMenuItem mnuCommit;
     private javax.swing.JMenuItem mnuExit;
@@ -1457,10 +1483,10 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     private javax.swing.JPanel pnlReports;
     private javax.swing.JPanel pnlShops;
     private javax.swing.JTable tblCheckProds;
+    private javax.swing.JTable tblProds;
     private javax.swing.JScrollPane tblSP;
     private javax.swing.JTabbedPane tbtMain;
     private javax.swing.JTextArea txtCatDesc;
-    private javax.swing.JTextArea txtCatDesc1;
     private javax.swing.JTextField txtCatId;
     private javax.swing.JTextField txtCatName;
     private javax.swing.JTextField txtCheckNum;
@@ -1475,6 +1501,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     private javax.swing.JTextArea txtLog;
     private javax.swing.JPasswordField txtPass;
     private javax.swing.JTextField txtPort;
+    private javax.swing.JTextArea txtProdDesc;
     private javax.swing.JTextField txtProdId;
     private javax.swing.JTextField txtProdName;
     private javax.swing.JTextField txtProdPrice;
