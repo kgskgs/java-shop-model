@@ -15,11 +15,21 @@ import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import javax.swing.DefaultListModel;
+import javax.swing.DefaultListSelectionModel;
 import javax.swing.JLayeredPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.RowFilter;
+import javax.swing.RowFilter.ComparisonType;
+import javax.swing.RowSorter;
+import javax.swing.SingleSelectionModel;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 import shop.db.*;
 import shop.infrastructure.MySqlRepository;
 import shop.models.*;
@@ -62,6 +72,9 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     //DefaultListModel<String> lstProdsM;
     //ListModelManager<Product> prodLstManager;
     DefaultTableModel tblProdsM;
+    DefaultListSelectionModel tblProdsSM;
+    TableRowSorter<? extends TableModel>  tblProdsRS;
+    
  
     /**
      * Creates new form ShopForm, redirects os to doc
@@ -73,6 +86,14 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         //this.lstProdsM = (DefaultListModel<String>) lstProds.getModel();
         this.lstCatsM = (DefaultListModel<String>) lstCats.getModel();
         tblProdsM = (DefaultTableModel) tblProds.getModel();
+        tblProdsSM = (DefaultListSelectionModel) tblProds.getSelectionModel();
+        //table list selection can't be added from netbeans gui
+        tblProdsSM.addListSelectionListener((ListSelectionEvent e) -> {
+            tblProdsListSelection(e);
+        });
+        
+        tblProdsRS = (TableRowSorter) tblProds.getRowSorter(); 
+
         
         //set up log textarea
         PrintStream os = new PrintStream(new LogDocStream(txtLog.getDocument()), true);
@@ -144,7 +165,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
             tblProdsM.addRow(new Object[] {-1, "New Product"});
             
             for (Product p : products){
-                tblProdsM.addRow(new Object[] {p.categoryId, p.productName});
+                tblProdsM.addRow(new Object[] {p.categoryId, Integer.toString(p.productId) +" - "+ p.productName});
             }
             
             //prodLstManager = new ListModelManager<> (Product.class, products, catKeys);
@@ -250,12 +271,24 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
      */
     private void clearTxts(JPanel pnl){
        for (Component c : pnl.getComponents()){
+           //System.out.println(c.toString());
            if (c instanceof JTextField){
                ((JTextField) c).setText("");
-           } else if (c instanceof JTextArea){
-               ((JTextArea) c).setText("");
+           } else if (c instanceof JScrollPane){
+               //System.out.println("test");
+               Component c1 = ((JScrollPane)c).getViewport().getComponent(0);
+               ((JTextArea) (c1)).setText("");
            }
        }
+    }
+    
+    
+    private void setRowFilterInt(TableRowSorter<? extends TableModel> rs, int[] vals, int colIndex){
+        ArrayList<RowFilter<Object,Object>> allFilters = new ArrayList<>();
+        for (int i = 0; i < vals.length; i++){
+            allFilters.add(RowFilter.numberFilter(ComparisonType.EQUAL, vals[i], colIndex));
+        }
+        rs.setRowFilter(RowFilter.orFilter(allFilters));
     }
     
     @Override
@@ -598,9 +631,9 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
 
         tbtMain.addTab("Shops & Employees", pnlShops);
 
+        tblProds.setAutoCreateRowSorter(true);
         tblProds.setModel(new javax.swing.table.DefaultTableModel(0, 2));
         tblProds.setAutoscrolls(false);
-        tblProds.setColumnSelectionAllowed(false);
         tblProds.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         jScrollPane4.setViewportView(tblProds);
         tblProds.setTableHeader(null);
@@ -1305,6 +1338,23 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         //TODO add code
     }//GEN-LAST:event_mnuSaveLogActionPerformed
 
+    
+    private void tblProdsListSelection(ListSelectionEvent e){
+        if (!e.getValueIsAdjusting()){
+            int selected = tblProdsSM.getAnchorSelectionIndex();
+            //System.out.println(selected);
+            if (selected == 0 || selected == -1){ //-1 = nothing selected
+                clearTxts(pnlDetailProd);
+            } else {
+                int absoluteProdIndex = tblProdsRS.convertRowIndexToModel(selected);
+                //System.out.println(tblProdsM.getValueAt(tblProdsRS.convertRowIndexToModel(selected), 1));
+                //int absoluteProdIndex = tblProds.convertRowIndexToModel(selected-1);
+                //System.out.println(absoluteProdIndex);
+                loadProduct(products.get(absoluteProdIndex - 1));
+            }       
+        }
+    }
+    
     /*when tabs are changed call the appropriate manager functions*/
     private void tbtMainStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_tbtMainStateChanged
         if(loggedIn){
@@ -1388,11 +1438,14 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
             if (selected == 0){ //new category
                 clearTxts(pnlDetailsCat);
                 tblProds.setEnabled(false);
+                //remove all items from product table
+                setRowFilterInt(tblProdsRS, new int [] {-2}, 0);
             } else {
-                loadCategory(categories.get(selected - 1));
+                Category selectedCat = categories.get(selected - 1);
+                loadCategory(selectedCat);
                 tblProds.setEnabled(true);
-                
-                //tblProds.setModel(prodLstManager.getModel(selected-1));
+                //-1 is the value for "new"
+                setRowFilterInt(tblProdsRS, new int [] {selectedCat.productCategoriyId, -1}, 0);
             }
         }
     }//GEN-LAST:event_lstCatsValueChanged
