@@ -48,6 +48,7 @@ CREATE TABLE productCategories
 (
     productCategoriyId  INT unsigned NOT NULL AUTO_INCREMENT,
     categoryName        VARCHAR(150) NOT NULL,
+    active              TINYINT(1) unsigned NOT NULL,
     description         TEXT NULL,
     PRIMARY KEY         (productCategoriyId)
 );

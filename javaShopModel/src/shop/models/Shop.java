@@ -18,10 +18,12 @@ public class Shop {
     public int shopId;
     public String shopName;
     public String address;
+    public int active;
 
     public Shop(String shopName, String address) {
         this.shopName = shopName;
         this.address = address;
+        active = 1;
     }
 
     public Shop() {

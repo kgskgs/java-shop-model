@@ -82,10 +82,9 @@ public class MySqlRepository<T> implements IRepository<T> {
         sqlBuilder.append(" LIMIT ")
             .append(count)
             .append(" OFFSET ")
-            .append(offset)
-            .append(";");
+            .append(offset);
 
-        System.out.println(sqlBuilder.toString());
+        //System.out.println(sqlBuilder.toString());
         ResultSet set = state.executeQuery(sqlBuilder.toString());
 
         ArrayList<T> resultList = new ArrayList<>();
@@ -122,8 +121,7 @@ public class MySqlRepository<T> implements IRepository<T> {
                 .append(" WHERE ")
                 .append(keyField.getName())
                 .append(" = '")
-                .append(id)
-                .append("';");
+                .append(id);
 
         //System.out.println(sqlBuilder.toString());
 
@@ -155,12 +153,11 @@ public class MySqlRepository<T> implements IRepository<T> {
 
                     sqlBuilder.append("\"")
                             .append(f.get(model).toString())
-                            .append("\"")   
-                            .append(",");
+                            .append("\"");
 
             }
         }
-        sqlBuilder.deleteCharAt(sqlBuilder.length()-1).append(");");
+        sqlBuilder.deleteCharAt(sqlBuilder.length()-1).append(")");
 
         return sqlBuilder.toString();
     }
@@ -222,8 +219,7 @@ public class MySqlRepository<T> implements IRepository<T> {
                 .append(" WHERE ")
                 .append(keyField.getName())
                 .append(" = ")
-                .append(id)
-                .append(";");
+                .append(id);
         
         sqlQueue.offer(sqlBuilder.toString());
     }
@@ -254,10 +250,9 @@ public class MySqlRepository<T> implements IRepository<T> {
                     .append(" WHERE ")
                     .append(keyField.getName())
                     .append(" = ")
-                    .append(keyField.get(model).toString())
-                    .append(";");
+                    .append(keyField.get(model).toString());
             
-            System.out.println(sqlBuilder.toString());
+            //System.out.println(sqlBuilder.toString());
             sqlQueue.offer(sqlBuilder.toString());
             
         } catch (IllegalArgumentException | IllegalAccessException ex) {

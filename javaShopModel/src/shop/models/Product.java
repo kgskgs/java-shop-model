@@ -27,11 +27,11 @@ public class Product extends Model {
     public int active;
     public String description;
 
-    public Product(String productName, double price, int categoryId, int active, String description) {
+    public Product(String productName, double price, int categoryId, String description) {
         this.productName = productName;
         this.price = price;
         this.categoryId = categoryId;
-        this.active = active;
+        this.active = 1;
         this.description = description;
     }
 

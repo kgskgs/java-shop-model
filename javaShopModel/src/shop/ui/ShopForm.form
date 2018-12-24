@@ -597,7 +597,7 @@
                       </Properties>
                       <AuxValues>
                         <AuxValue name="JavaCodeGenerator_InitCodePre" type="java.lang.String" value="tblProds.setAutoCreateRowSorter(true);"/>
-                        <AuxValue name="JavaCodeGenerator_allCodePost" type="java.lang.String" value="tblProds.setTableHeader(null);&#xd;&#xa;javax.swing.table.TableColumnModel tcm = tblProds.getColumnModel();&#xd;&#xa;tcm.removeColumn( tcm.getColumn(0) );"/>
+                        <AuxValue name="JavaCodeGenerator_allCodePost" type="java.lang.String" value="tblProds.setTableHeader(null); //remove header&#xd;&#xa;//hide first column&#xd;&#xa;javax.swing.table.TableColumnModel tcm = tblProds.getColumnModel();&#xd;&#xa;tcm.removeColumn( tcm.getColumn(0) );&#xd;&#xa;//make table not editable&#xd;&#xa;tblProds.setDefaultEditor(Object.class, null);&#xd;&#xa;&#xd;&#xa;"/>
                       </AuxValues>
                     </Component>
                   </SubComponents>
@@ -712,16 +712,25 @@
                       <Properties>
                         <Property name="text" type="java.lang.String" value="Update"/>
                       </Properties>
+                      <Events>
+                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnCatUpdateActionPerformed"/>
+                      </Events>
                     </Component>
                     <Component class="javax.swing.JButton" name="btnCatNew">
                       <Properties>
                         <Property name="text" type="java.lang.String" value="New"/>
                       </Properties>
+                      <Events>
+                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnCatNewActionPerformed"/>
+                      </Events>
                     </Component>
                     <Component class="javax.swing.JButton" name="btnCatDelete">
                       <Properties>
                         <Property name="text" type="java.lang.String" value="Delete"/>
                       </Properties>
+                      <Events>
+                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnCatDeleteActionPerformed"/>
+                      </Events>
                     </Component>
                     <Component class="javax.swing.JTextField" name="txtCatName">
                     </Component>
@@ -834,17 +843,28 @@
                     <Component class="javax.swing.JButton" name="btnProdUpdate">
                       <Properties>
                         <Property name="text" type="java.lang.String" value="Update"/>
+                        <Property name="enabled" type="boolean" value="false"/>
                       </Properties>
+                      <Events>
+                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnProdUpdateActionPerformed"/>
+                      </Events>
                     </Component>
                     <Component class="javax.swing.JButton" name="btnProdNew">
                       <Properties>
                         <Property name="text" type="java.lang.String" value="New"/>
                       </Properties>
+                      <Events>
+                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnProdNewActionPerformed"/>
+                      </Events>
                     </Component>
                     <Component class="javax.swing.JButton" name="btnProdDelete">
                       <Properties>
                         <Property name="text" type="java.lang.String" value="Delete"/>
+                        <Property name="enabled" type="boolean" value="false"/>
                       </Properties>
+                      <Events>
+                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnProdDeleteActionPerformed"/>
+                      </Events>
                     </Component>
                     <Component class="javax.swing.JLabel" name="jLabel13">
                       <Properties>

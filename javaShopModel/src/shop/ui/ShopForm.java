@@ -12,6 +12,7 @@ import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import javax.swing.DefaultListModel;
@@ -67,6 +68,8 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     ArrayList<Product> products;
     MySqlRepository<Category> catRepository;
     MySqlRepository<Product> prodRepository;
+    
+    
     //ui representations of models
     DefaultListModel<String> lstCatsM;
     //DefaultListModel<String> lstProdsM;
@@ -74,8 +77,9 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     DefaultTableModel tblProdsM;
     DefaultListSelectionModel tblProdsSM;
     TableRowSorter<? extends TableModel>  tblProdsRS;
+    ListSelectionListener prodsListener;
     
- 
+
     /**
      * Creates new form ShopForm, redirects os to doc
      */  
@@ -88,15 +92,19 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         tblProdsM = (DefaultTableModel) tblProds.getModel();
         tblProdsSM = (DefaultListSelectionModel) tblProds.getSelectionModel();
         //table list selection can't be added from netbeans gui
-        tblProdsSM.addListSelectionListener((ListSelectionEvent e) -> {
-            tblProdsListSelection(e);
-        });
+        prodsListener = new ListSelectionListener () {
+            public void valueChanged(ListSelectionEvent e) {
+                tblProdsListSelection(e);
+            }
+        };
+
+        
         
         tblProdsRS = (TableRowSorter) tblProds.getRowSorter(); 
 
         
         //set up log textarea
-        PrintStream os = new PrintStream(new LogDocStream(txtLog.getDocument()), true);
+        //PrintStream os = new PrintStream(new LogDocStream(txtLog.getDocument()), true);
         //System.setOut(os);
         //System.setErr(os);
         //set up database connection vars
@@ -153,7 +161,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
             
             //ArrayList<Integer> catKeys = new ArrayList<>();
             
-            categories = catRepository.GetAll(0, 1000, false);
+            categories = catRepository.GetAll(0, 1000, true);
             products = prodRepository.GetAll(0, 1000, true);
             //Collections.sort(products, new ProdSortByCategory());
             
@@ -162,13 +170,20 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
                 //catKeys.add(c.productCategoriyId);
             }
             
+            //detach listener while table loads
+            
+            
             tblProdsM.addRow(new Object[] {-1, "New Product"});
             
             for (Product p : products){
                 tblProdsM.addRow(new Object[] {p.categoryId, Integer.toString(p.productId) +" - "+ p.productName});
             }
             
-            //prodLstManager = new ListModelManager<> (Product.class, products, catKeys);
+            tblProdsSM.addListSelectionListener(prodsListener);
+            
+            lstCats.setSelectedIndex(1);
+
+            
             
         } catch (SQLException ex) {
             ex.printStackTrace();
@@ -176,7 +191,35 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     }
     
     public void pnlProductsExit(){
+        tblProdsSM.removeListSelectionListener(prodsListener);
+        
+        for (Product p: products){
+            if (p.isNewInstance()){
+                prodRepository.Insert(p);
+                p.setNewInstance(false);
+            } else if (p.isUpdated()){
+                prodRepository.Update(p);
+                p.setUpdated(false);
+            }
+        }
+        
+        for (Category c: categories){
+            if (c.isNewInstance()){
+                catRepository.Insert(c);
+                c.setNewInstance(false);
+            } else if (c.isUpdated()){
+                catRepository.Update(c);
+                c.setUpdated(false);
+            } 
+        }
+        
+        lstCatsM.removeAllElements();
+        clearTable(tblProdsM);   
+    }
     
+    private void clearTable(DefaultTableModel tm){
+        for (int i = tm.getRowCount()-1; i >= 0; i--)
+            tm.removeRow(i);
     }
     
     public void pnlCheckoutEnter(){   
@@ -208,10 +251,14 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         
         //update entities
         for (Client c : clients) {
-            if (c.isNewInstance())
+            if (c.isNewInstance()){
                 clientRepository.Insert(c);
-            else if (c.isUpdated())
+                c.setNewInstance(false);
+            }
+            else if (c.isUpdated()){
                 clientRepository.Update(c);
+                c.setUpdated(false);
+            }
         }
         //we'll be reloading these try to free memory while not in use
         clients.clear();
@@ -238,8 +285,11 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         txtProdName.setText(p.productName);
         txtProdPrice.setText(String.valueOf(p.price));
         txtProdDesc.setText(p.description);
-        txtProdId.setText(Integer.toString(p.productId));
+        String prodIdText = (p.productId==-1)? "pending" : Integer.toString(p.productId);
+        txtProdId.setText(prodIdText);
     }
+    
+    
     //UI HELPER FUNCTIONS
     /**
      * swap two components in the layered pane
@@ -271,17 +321,30 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
      */
     private void clearTxts(JPanel pnl){
        for (Component c : pnl.getComponents()){
-           //System.out.println(c.toString());
            if (c instanceof JTextField){
                ((JTextField) c).setText("");
            } else if (c instanceof JScrollPane){
-               //System.out.println("test");
                Component c1 = ((JScrollPane)c).getViewport().getComponent(0);
                ((JTextArea) (c1)).setText("");
            }
        }
     }
     
+    /**
+     * Sets enabled parameter for all components in a JPanel
+     * @param pnl panel whose components to set
+     * @param enabled 
+     */
+    private void setTxtEnabled(JPanel pnl, boolean enabled){
+        for (Component c : pnl.getComponents()){
+            if (c instanceof JTextField)
+                c.setEnabled(enabled);
+            if (c instanceof JScrollPane){
+               Component c1 = ((JScrollPane)c).getViewport().getComponent(0);
+               c1.setEnabled(enabled);
+           }
+        }
+    }
     
     private void setRowFilterInt(TableRowSorter<? extends TableModel> rs, int[] vals, int colIndex){
         ArrayList<RowFilter<Object,Object>> allFilters = new ArrayList<>();
@@ -636,9 +699,12 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         tblProds.setAutoscrolls(false);
         tblProds.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
         jScrollPane4.setViewportView(tblProds);
-        tblProds.setTableHeader(null);
+        tblProds.setTableHeader(null); //remove header
+        //hide first column
         javax.swing.table.TableColumnModel tcm = tblProds.getColumnModel();
         tcm.removeColumn( tcm.getColumn(0) );
+        //make table not editable
+        tblProds.setDefaultEditor(Object.class, null);
 
         lstCats.setModel(new javax.swing.DefaultListModel<String>());
         lstCats.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
@@ -660,10 +726,25 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         jLabel12.setText("ID");
 
         btnCatUpdate.setText("Update");
+        btnCatUpdate.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnCatUpdateActionPerformed(evt);
+            }
+        });
 
         btnCatNew.setText("New");
+        btnCatNew.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnCatNewActionPerformed(evt);
+            }
+        });
 
         btnCatDelete.setText("Delete");
+        btnCatDelete.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnCatDeleteActionPerformed(evt);
+            }
+        });
 
         txtCatId.setEnabled(false);
 
@@ -723,10 +804,27 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         pnlDetailProd.setBorder(javax.swing.BorderFactory.createTitledBorder("Product Details"));
 
         btnProdUpdate.setText("Update");
+        btnProdUpdate.setEnabled(false);
+        btnProdUpdate.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnProdUpdateActionPerformed(evt);
+            }
+        });
 
         btnProdNew.setText("New");
+        btnProdNew.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnProdNewActionPerformed(evt);
+            }
+        });
 
         btnProdDelete.setText("Delete");
+        btnProdDelete.setEnabled(false);
+        btnProdDelete.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnProdDeleteActionPerformed(evt);
+            }
+        });
 
         jLabel13.setText("Name");
 
@@ -1322,7 +1420,8 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     }//GEN-LAST:event_mnuLogoutActionPerformed
 
     private void mnuCommitActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuCommitActionPerformed
-        dbWrite.setForceCommit(true);
+        //dbWrite.setForceCommit(true);
+        queryStrQueue.add("fc");
     }//GEN-LAST:event_mnuCommitActionPerformed
 
     private void chkInvoiceActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkInvoiceActionPerformed
@@ -1339,18 +1438,24 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     }//GEN-LAST:event_mnuSaveLogActionPerformed
 
     
-    private void tblProdsListSelection(ListSelectionEvent e){
-        if (!e.getValueIsAdjusting()){
+    private void tblProdsListSelection(ListSelectionEvent evt){
+        if (!evt.getValueIsAdjusting()){
             int selected = tblProdsSM.getAnchorSelectionIndex();
-            //System.out.println(selected);
+            
             if (selected == 0 || selected == -1){ //-1 = nothing selected
                 clearTxts(pnlDetailProd);
-            } else {
+                btnProdUpdate.setEnabled(false);
+                btnProdDelete.setEnabled(false); 
+                btnProdNew.setEnabled((selected == 0));
+            } else {          
                 int absoluteProdIndex = tblProdsRS.convertRowIndexToModel(selected);
-                //System.out.println(tblProdsM.getValueAt(tblProdsRS.convertRowIndexToModel(selected), 1));
-                //int absoluteProdIndex = tblProds.convertRowIndexToModel(selected-1);
-                //System.out.println(absoluteProdIndex);
                 loadProduct(products.get(absoluteProdIndex - 1));
+                
+                if (evt.getFirstIndex() == 0){ //these were disabled previously
+                    btnProdUpdate.setEnabled(true);
+                    btnProdDelete.setEnabled(true);
+                    btnProdNew.setEnabled(true);
+                }
             }       
         }
     }
@@ -1435,20 +1540,117 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         //category details
         if(!evt.getValueIsAdjusting()){ //list is updated
             int selected = lstCats.getSelectedIndex();
-            if (selected == 0){ //new category
+            
+            if (selected == 0 || selected == -1){ //new category
                 clearTxts(pnlDetailsCat);
                 tblProds.setEnabled(false);
                 //remove all items from product table
                 setRowFilterInt(tblProdsRS, new int [] {-2}, 0);
+                btnCatUpdate.setEnabled(false);
+                btnCatDelete.setEnabled(false);
+                setTxtEnabled(pnlDetailProd, false);
             } else {
                 Category selectedCat = categories.get(selected - 1);
                 loadCategory(selectedCat);
-                tblProds.setEnabled(true);
+                
                 //-1 is the value for "new"
                 setRowFilterInt(tblProdsRS, new int [] {selectedCat.productCategoriyId, -1}, 0);
+                
+                if (evt.getFirstIndex() == 0 || evt.getFirstIndex() == evt.getLastIndex()){ //if last index = first index -> something selected for the first time
+                    //everything in product details was disabled
+                    setTxtEnabled(pnlDetailProd, true);  
+                    tblProds.setEnabled(true);
+                    btnCatUpdate.setEnabled(true);
+                    btnCatDelete.setEnabled(true);
+                }
+            
+                tblProds.setRowSelectionInterval(0, 0);
             }
         }
     }//GEN-LAST:event_lstCatsValueChanged
+
+    private void btnCatUpdateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCatUpdateActionPerformed
+        if (Dialogues.confirmYesNo(Dialogues.OVERWRITE_TXT)){
+            Category c = categories.get(lstCats.getSelectedIndex()-1);
+            c.categoryName = txtCatName.getText();
+            c.description = txtCatDesc.getText();
+            c.setUpdated(true);
+        }
+    }//GEN-LAST:event_btnCatUpdateActionPerformed
+
+    private void btnCatNewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCatNewActionPerformed
+        Category c = new Category (txtCatName.getText(), txtCatDesc.getText());
+        //need key immediately in case we want to add products
+        c.productCategoriyId = catRepository.InsertGetKey(c);
+        categories.add(c);
+        lstCatsM.addElement(Integer.toString(c.productCategoriyId) +" - "+ c.categoryName);
+    }//GEN-LAST:event_btnCatNewActionPerformed
+
+    private void btnCatDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCatDeleteActionPerformed
+        if (tblProds.getRowCount() > 1) { //getRowCount returns visible rows only
+            System.out.println("Category is not empty, delete all products if you want to remove it");
+        } else if (Dialogues.confirmYesNo(Dialogues.DELETE_TXT)){
+            int selected = lstCats.getSelectedIndex();
+            //System.out.println(selected);
+            Category c = categories.get(selected-1);
+            if (c.isNewInstance()){
+                categories.remove(selected-1);
+            } else {
+                c.active = 0;
+                c.setUpdated(true);
+            }
+            
+            lstCats.setSelectedIndex(selected-1); //prevent exception from removing selection
+            lstCatsM.removeElementAt(selected);
+        }
+    }//GEN-LAST:event_btnCatDeleteActionPerformed
+
+    private void btnProdUpdateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnProdUpdateActionPerformed
+        if (Dialogues.confirmYesNo(Dialogues.OVERWRITE_TXT)){
+            int selected = tblProdsSM.getAnchorSelectionIndex();
+            //first row is "new"
+            int absoluteProdIndex = tblProdsRS.convertRowIndexToModel(selected)-1;
+            Product p = products.get(absoluteProdIndex);
+            
+            p.productName = txtProdName.getText();
+            p.price =  Double.parseDouble(txtProdPrice.getText());
+            p.description = txtProdDesc.getText();
+            
+            p.setUpdated(true);
+        }
+    }//GEN-LAST:event_btnProdUpdateActionPerformed
+
+    private void btnProdNewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnProdNewActionPerformed
+        int catId = categories.get(lstCats.getSelectedIndex()-1).productCategoriyId;
+        Product p = new Product(txtProdName.getText(), 
+                            Double.parseDouble(txtProdPrice.getText()), 
+                            catId, 
+                            txtProdDesc.getText());
+        p.productId = -1;
+        
+        p.setNewInstance(true);
+        products.add(p);
+        
+        tblProdsM.addRow(new Object[] {catId, "NA - "+ p.productName});
+    }//GEN-LAST:event_btnProdNewActionPerformed
+
+    private void btnProdDeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnProdDeleteActionPerformed
+        if (Dialogues.confirmYesNo(Dialogues.DELETE_TXT)){
+            int selected = tblProdsSM.getAnchorSelectionIndex();
+            int absoluteProdIndex = tblProdsRS.convertRowIndexToModel(selected);
+
+            Product p = products.get(absoluteProdIndex-1);
+            if (p.isNewInstance()){ //new object not yet added to db
+                products.remove(absoluteProdIndex - 1);
+            } else {
+                p.active = 0;
+                p.setUpdated(true);
+            }
+            
+            tblProdsSM.setSelectionInterval(selected-1, selected-1);
+            tblProdsM.removeRow(absoluteProdIndex);
+        }
+    }//GEN-LAST:event_btnProdDeleteActionPerformed
 
     //<editor-fold defaultstate="collapsed" desc="autogenreated variables">
     // Variables declaration - do not modify//GEN-BEGIN:variables

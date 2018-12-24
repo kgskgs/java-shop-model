@@ -17,11 +17,13 @@ public class Category extends Model {
     @Key
     public int productCategoriyId;
     public String categoryName;
+    public int active;
     public String description;
 
     public Category(String categoryName, String description) {
         this.categoryName = categoryName;
         this.description = description;
+        this.active = 1;
     }
 
     public Category() {

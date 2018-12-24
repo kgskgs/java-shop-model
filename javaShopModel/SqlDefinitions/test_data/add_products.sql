@@ -1,0 +1,9 @@
+INSERT INTO products VALUES (NULL, "prod 1","10.11", 1, 1,"some text11dfasdasd11as");
+INSERT INTO products VALUES (NULL, "prod 2","20.22", 2, 1,"some text22dfasdasd22as");
+INSERT INTO products VALUES (NULL, "prod 3","30.33", 3, 1,"some text33dfasdasd33as");
+INSERT INTO products VALUES (NULL, "prod 4","40.11", 1, 1,"some text44dfasdasd44as");
+INSERT INTO products VALUES (NULL, "prod 5","50.22", 6, 1,"some text55dfasdasd55as");
+INSERT INTO products VALUES (NULL, "prod 6","60.33", 3, 1,"some text66dfasdasd66as");
+INSERT INTO products VALUES (NULL, "prod 7","70.11", 5, 1,"some text77dfasdasd77as");
+INSERT INTO products VALUES (NULL, "prod 8","80.22", 6, 1,"some text88dfasdasd88as");
+INSERT INTO products VALUES (NULL, "prod 9","90.33", 5, 1,"some text99dfasdasd99as");
