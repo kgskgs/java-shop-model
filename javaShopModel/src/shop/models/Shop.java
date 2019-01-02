@@ -13,7 +13,7 @@ import shop.infrastructure.interfaces.Table;
  * @author Lyuboslav
  */
 @Table(Name = "shops")
-public class Shop {
+public class Shop extends Model{
     @Key
     public int shopId;
     public String shopName;

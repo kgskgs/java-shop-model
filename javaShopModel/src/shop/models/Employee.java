@@ -26,12 +26,12 @@ public class Employee extends Model{
     @Foreign(comparator = EmpSortByShop.class)
     public int shopId;
 
-    public Employee(String username, String firstname, String lastname, int accessLvl, int active, int shopId) {
+    public Employee(String username, String firstname, String lastname, int accessLvl, int shopId) {
         this.username = username;
         this.firstname = firstname;
         this.lastname = lastname;
         this.accessLvl = accessLvl;
-        this.active = active;
+        this.active = 1;
         this.shopId = shopId;
     }
 

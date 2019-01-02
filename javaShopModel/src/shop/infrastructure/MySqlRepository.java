@@ -153,7 +153,7 @@ public class MySqlRepository<T> implements IRepository<T> {
 
                     sqlBuilder.append("\"")
                             .append(f.get(model).toString())
-                            .append("\"");
+                            .append("\",");
 
             }
         }
