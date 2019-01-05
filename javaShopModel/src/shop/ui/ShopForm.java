@@ -551,12 +551,8 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         jLabel26 = new javax.swing.JLabel();
         pnlCheckout = new javax.swing.JPanel();
         tblSP = new javax.swing.JScrollPane();
-        tblCheckProds = new javax.swing.JTable();
-        cmbCheckProd = new javax.swing.JComboBox<>();
-        btnCheckAdd = new javax.swing.JButton();
+        tblCheckout = new javax.swing.JTable();
         chkInvoice = new javax.swing.JCheckBox();
-        btnCheckDel = new javax.swing.JButton();
-        txtCheckNum = new javax.swing.JTextField();
         btnCheckDone = new javax.swing.JButton();
         pnlInvoice = new javax.swing.JPanel();
         jLabel16 = new javax.swing.JLabel();
@@ -568,7 +564,17 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         txtInvFname = new javax.swing.JTextField();
         jLabel19 = new javax.swing.JLabel();
         txtInvLname = new javax.swing.JTextField();
-        txtCheckProdId = new javax.swing.JTextField();
+        pnlChkFilters = new javax.swing.JPanel();
+        txtCatIdFilter = new javax.swing.JTextField();
+        jLabel29 = new javax.swing.JLabel();
+        jLabel31 = new javax.swing.JLabel();
+        txtProdIdFilter = new javax.swing.JTextField();
+        txtCatNameFilter = new javax.swing.JTextField();
+        txtProdNameFilter = new javax.swing.JTextField();
+        jLabel30 = new javax.swing.JLabel();
+        jLabel32 = new javax.swing.JLabel();
+        btnClearCatF = new javax.swing.JButton();
+        btnClearProdF = new javax.swing.JButton();
         pnlReports = new javax.swing.JPanel();
         jLabel20 = new javax.swing.JLabel();
         cmbRepShop = new javax.swing.JComboBox<>();
@@ -858,7 +864,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
                 .addGroup(pnlShopsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(pnlDetailsShop, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(pnlDetailEmp, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap(34, Short.MAX_VALUE))
+                .addContainerGap(47, Short.MAX_VALUE))
         );
         pnlShopsLayout.setVerticalGroup(
             pnlShopsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -964,7 +970,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
                 .addComponent(btnCatNew)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(btnCatDelete)
-                .addContainerGap(31, Short.MAX_VALUE))
+                .addContainerGap(37, Short.MAX_VALUE))
         );
         pnlDetailsCatLayout.setVerticalGroup(
             pnlDetailsCatLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1049,7 +1055,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
                             .addComponent(txtProdName))))
                 .addContainerGap())
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, pnlDetailProdLayout.createSequentialGroup()
-                .addGap(0, 37, Short.MAX_VALUE)
+                .addGap(0, 43, Short.MAX_VALUE)
                 .addComponent(btnProdUpdate)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(btnProdNew)
@@ -1127,21 +1133,20 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
 
         tbtMain.addTab("Products", pnlProducts);
 
-        tblCheckProds.setModel(new javax.swing.table.DefaultTableModel(
+        tblCheckout.setAutoCreateRowSorter(true);
+        tblCheckout.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, "test1",  new Integer(1)},
-                {null, "test2",  new Integer(2)},
-                {null, "test3",  new Integer(3)}
+
             },
             new String [] {
-                "ID", "Product", "#"
+                "ID", "Category", "ID", "Product", "#", "Price"
             }
         ) {
             Class[] types = new Class [] {
-                java.lang.Integer.class, java.lang.String.class, java.lang.Integer.class
+                java.lang.Integer.class, java.lang.String.class, java.lang.Integer.class, java.lang.String.class, java.lang.Integer.class, java.lang.Double.class
             };
             boolean[] canEdit = new boolean [] {
-                false, false, true
+                false, false, false, false, true, false
             };
 
             public Class getColumnClass(int columnIndex) {
@@ -1152,20 +1157,16 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
                 return canEdit [columnIndex];
             }
         });
-        tblCheckProds.getTableHeader().setReorderingAllowed(false);
-        tblSP.setViewportView(tblCheckProds);
-        if (tblCheckProds.getColumnModel().getColumnCount() > 0) {
-            tblCheckProds.getColumnModel().getColumn(0).setResizable(false);
-            tblCheckProds.getColumnModel().getColumn(0).setPreferredWidth(50);
-            tblCheckProds.getColumnModel().getColumn(1).setResizable(false);
-            tblCheckProds.getColumnModel().getColumn(1).setPreferredWidth(250);
-            tblCheckProds.getColumnModel().getColumn(2).setResizable(false);
-            tblCheckProds.getColumnModel().getColumn(2).setPreferredWidth(50);
+        tblCheckout.getTableHeader().setReorderingAllowed(false);
+        tblSP.setViewportView(tblCheckout);
+        if (tblCheckout.getColumnModel().getColumnCount() > 0) {
+            tblCheckout.getColumnModel().getColumn(0).setResizable(false);
+            tblCheckout.getColumnModel().getColumn(0).setPreferredWidth(50);
+            tblCheckout.getColumnModel().getColumn(1).setResizable(false);
+            tblCheckout.getColumnModel().getColumn(1).setPreferredWidth(250);
+            tblCheckout.getColumnModel().getColumn(2).setResizable(false);
+            tblCheckout.getColumnModel().getColumn(2).setPreferredWidth(50);
         }
-
-        cmbCheckProd.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-
-        btnCheckAdd.setText("Add");
 
         chkInvoice.setText("Invoice");
         chkInvoice.addActionListener(new java.awt.event.ActionListener() {
@@ -1173,10 +1174,6 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
                 chkInvoiceActionPerformed(evt);
             }
         });
-
-        btnCheckDel.setText("Remove");
-
-        txtCheckNum.setText("1");
 
         btnCheckDone.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
         btnCheckDone.setText("Done");
@@ -1230,7 +1227,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(pnlInvoiceLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(txtInvCname)
-                            .addComponent(cmbInvCname, 0, 170, Short.MAX_VALUE)
+                            .addComponent(cmbInvCname, 0, 0, Short.MAX_VALUE)
                             .addComponent(txtInvEIK)))
                     .addGroup(pnlInvoiceLayout.createSequentialGroup()
                         .addContainerGap()
@@ -1270,63 +1267,111 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
+        pnlChkFilters.setBorder(javax.swing.BorderFactory.createTitledBorder("Filters"));
+
+        jLabel29.setText("Category");
+
+        jLabel31.setText("ID");
+
+        jLabel30.setText("Product");
+
+        jLabel32.setText("Name");
+
+        btnClearCatF.setText("Clear");
+
+        btnClearProdF.setText("Clear");
+
+        javax.swing.GroupLayout pnlChkFiltersLayout = new javax.swing.GroupLayout(pnlChkFilters);
+        pnlChkFilters.setLayout(pnlChkFiltersLayout);
+        pnlChkFiltersLayout.setHorizontalGroup(
+            pnlChkFiltersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pnlChkFiltersLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(pnlChkFiltersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jLabel29)
+                    .addComponent(jLabel30))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(pnlChkFiltersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel31)
+                    .addGroup(pnlChkFiltersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addComponent(txtProdIdFilter)
+                        .addComponent(txtCatIdFilter, javax.swing.GroupLayout.PREFERRED_SIZE, 57, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(pnlChkFiltersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(txtCatNameFilter, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txtProdNameFilter, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel32))
+                .addGap(18, 18, 18)
+                .addGroup(pnlChkFiltersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(btnClearCatF)
+                    .addComponent(btnClearProdF))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        pnlChkFiltersLayout.setVerticalGroup(
+            pnlChkFiltersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(pnlChkFiltersLayout.createSequentialGroup()
+                .addGroup(pnlChkFiltersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel31)
+                    .addComponent(jLabel32))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(pnlChkFiltersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(txtCatNameFilter, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txtCatIdFilter, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel29)
+                    .addComponent(btnClearCatF))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(pnlChkFiltersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(txtProdIdFilter, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txtProdNameFilter, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel30)
+                    .addComponent(btnClearProdF))
+                .addGap(0, 12, Short.MAX_VALUE))
+        );
+
         javax.swing.GroupLayout pnlCheckoutLayout = new javax.swing.GroupLayout(pnlCheckout);
         pnlCheckout.setLayout(pnlCheckoutLayout);
         pnlCheckoutLayout.setHorizontalGroup(
             pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnlCheckoutLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                    .addComponent(tblSP, javax.swing.GroupLayout.PREFERRED_SIZE, 294, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(pnlCheckoutLayout.createSequentialGroup()
-                        .addComponent(txtCheckProdId)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(cmbCheckProd, javax.swing.GroupLayout.PREFERRED_SIZE, 193, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addGroup(pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(pnlCheckoutLayout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(pnlInvoice, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(pnlCheckoutLayout.createSequentialGroup()
+                        .addGap(12, 12, 12)
+                        .addComponent(tblSP, javax.swing.GroupLayout.PREFERRED_SIZE, 378, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGroup(pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(pnlCheckoutLayout.createSequentialGroup()
-                                .addGap(18, 18, 18)
-                                .addGroup(pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                    .addGroup(pnlCheckoutLayout.createSequentialGroup()
-                                        .addComponent(txtCheckNum, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addGap(28, 28, 28)
-                                        .addComponent(btnCheckAdd, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                    .addGroup(pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addComponent(chkInvoice)
-                                        .addComponent(btnCheckDel))))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(pnlInvoice, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                             .addGroup(pnlCheckoutLayout.createSequentialGroup()
-                                .addGap(68, 68, 68)
-                                .addComponent(btnCheckDone, javax.swing.GroupLayout.PREFERRED_SIZE, 115, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addGap(0, 0, Short.MAX_VALUE))))
+                                .addGroup(pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(pnlCheckoutLayout.createSequentialGroup()
+                                        .addGap(63, 63, 63)
+                                        .addComponent(btnCheckDone, javax.swing.GroupLayout.PREFERRED_SIZE, 115, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addGroup(pnlCheckoutLayout.createSequentialGroup()
+                                        .addGap(18, 18, 18)
+                                        .addComponent(chkInvoice)))
+                                .addGap(0, 55, Short.MAX_VALUE))))
+                    .addGroup(pnlCheckoutLayout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(pnlChkFilters, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                .addContainerGap())
         );
         pnlCheckoutLayout.setVerticalGroup(
             pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnlCheckoutLayout.createSequentialGroup()
                 .addContainerGap()
+                .addComponent(pnlChkFilters, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addComponent(cmbCheckProd, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGroup(pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(txtCheckNum, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(txtCheckProdId, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                    .addComponent(btnCheckAdd))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                    .addComponent(tblSP, javax.swing.GroupLayout.PREFERRED_SIZE, 312, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(pnlCheckoutLayout.createSequentialGroup()
-                        .addComponent(btnCheckDel)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGap(24, 24, 24)
                         .addComponent(chkInvoice)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(18, 18, 18)
                         .addComponent(pnlInvoice, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(btnCheckDone, javax.swing.GroupLayout.PREFERRED_SIZE, 57, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(5, 5, 5)))
-                .addContainerGap(62, Short.MAX_VALUE))
+                        .addComponent(btnCheckDone, javax.swing.GroupLayout.PREFERRED_SIZE, 57, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(pnlCheckoutLayout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(tblSP, javax.swing.GroupLayout.PREFERRED_SIZE, 324, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGap(12, 12, 12))
         );
 
         tbtMain.addTab("Checkout", pnlCheckout);
@@ -1396,7 +1441,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
                     .addGroup(pnlReportsLayout.createSequentialGroup()
                         .addGap(215, 215, 215)
                         .addComponent(bntRepGet, javax.swing.GroupLayout.PREFERRED_SIZE, 115, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(147, Short.MAX_VALUE))
+                .addContainerGap(154, Short.MAX_VALUE))
         );
         pnlReportsLayout.setVerticalGroup(
             pnlReportsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1423,7 +1468,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
                     .addComponent(txtRepEIK, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(bntRepGet, javax.swing.GroupLayout.PREFERRED_SIZE, 57, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(134, Short.MAX_VALUE))
+                .addContainerGap(182, Short.MAX_VALUE))
         );
 
         tbtMain.addTab("Report", pnlReports);
@@ -2032,9 +2077,9 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     private javax.swing.JButton btnCatDelete;
     private javax.swing.JButton btnCatNew;
     private javax.swing.JButton btnCatUpdate;
-    private javax.swing.JButton btnCheckAdd;
-    private javax.swing.JButton btnCheckDel;
     private javax.swing.JButton btnCheckDone;
+    private javax.swing.JButton btnClearCatF;
+    private javax.swing.JButton btnClearProdF;
     private javax.swing.JButton btnEmpDelete;
     private javax.swing.JButton btnEmpNew;
     private javax.swing.JButton btnEmpUpdate;
@@ -2047,7 +2092,6 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     private javax.swing.JButton btnShopUpdate;
     private javax.swing.JCheckBox chkInvoice;
     private javax.swing.JCheckBox chkRepInv;
-    private javax.swing.JComboBox<String> cmbCheckProd;
     private javax.swing.JComboBox<String> cmbEmpRank;
     private javax.swing.JComboBox<String> cmbEmpShop;
     private javax.swing.JComboBox<String> cmbInvCname;
@@ -2074,7 +2118,11 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     private javax.swing.JLabel jLabel26;
     private javax.swing.JLabel jLabel27;
     private javax.swing.JLabel jLabel28;
+    private javax.swing.JLabel jLabel29;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel30;
+    private javax.swing.JLabel jLabel31;
+    private javax.swing.JLabel jLabel32;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
@@ -2103,6 +2151,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     private javax.swing.JMenuItem mnuUinfo;
     private javax.swing.JMenu mnuUserGrp;
     private javax.swing.JPanel pnlCheckout;
+    private javax.swing.JPanel pnlChkFilters;
     private javax.swing.JPanel pnlDetailEmp;
     private javax.swing.JPanel pnlDetailProd;
     private javax.swing.JPanel pnlDetailsCat;
@@ -2112,16 +2161,16 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     private javax.swing.JPanel pnlProducts;
     private javax.swing.JPanel pnlReports;
     private javax.swing.JPanel pnlShops;
-    private javax.swing.JTable tblCheckProds;
+    private javax.swing.JTable tblCheckout;
     private javax.swing.JTable tblEmps;
     private javax.swing.JTable tblProds;
     private javax.swing.JScrollPane tblSP;
     private javax.swing.JTabbedPane tbtMain;
     private javax.swing.JTextArea txtCatDesc;
     private javax.swing.JTextField txtCatId;
+    private javax.swing.JTextField txtCatIdFilter;
     private javax.swing.JTextField txtCatName;
-    private javax.swing.JTextField txtCheckNum;
-    private javax.swing.JTextField txtCheckProdId;
+    private javax.swing.JTextField txtCatNameFilter;
     private javax.swing.JTextField txtEmpId;
     private javax.swing.JTextField txtEmpName1;
     private javax.swing.JTextField txtEmpName2;
@@ -2135,7 +2184,9 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     private javax.swing.JTextField txtPort;
     private javax.swing.JTextArea txtProdDesc;
     private javax.swing.JTextField txtProdId;
+    private javax.swing.JTextField txtProdIdFilter;
     private javax.swing.JTextField txtProdName;
+    private javax.swing.JTextField txtProdNameFilter;
     private javax.swing.JTextField txtProdPrice;
     private javax.swing.JTextField txtRepEIK;
     private javax.swing.JTextField txtRepFrom;
