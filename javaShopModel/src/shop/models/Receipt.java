@@ -16,12 +16,12 @@ public class Receipt extends Model{
     @Key
     public int receiptId;
     public int invoice;
-    public int invoiceId;
+    public Integer invoiceId; //Integer so it can be null
     public int employeeId;
     @Timestamp
     public String buyDate;
 
-    public Receipt(int invoice, int invoiceId, int employeeId, String buyDate) {
+    public Receipt(int invoice, Integer invoiceId, int employeeId, String buyDate) {
         this.invoice = invoice;
         this.invoiceId = invoiceId;
         this.employeeId = employeeId;

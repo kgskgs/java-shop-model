@@ -42,6 +42,22 @@
             <Property name="enabled" type="boolean" value="false"/>
           </Properties>
           <SubComponents>
+            <MenuItem class="javax.swing.JMenuItem" name="mnuUinfo">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Info"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuUinfoActionPerformed"/>
+              </Events>
+            </MenuItem>
+            <MenuItem class="javax.swing.JMenuItem" name="mnuChangePass">
+              <Properties>
+                <Property name="text" type="java.lang.String" value="Change Password"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuChangePassActionPerformed"/>
+              </Events>
+            </MenuItem>
             <MenuItem class="javax.swing.JMenuItem" name="mnuLogout">
               <Properties>
                 <Property name="text" type="java.lang.String" value="Log out"/>
@@ -49,11 +65,6 @@
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mnuLogoutActionPerformed"/>
               </Events>
-            </MenuItem>
-            <MenuItem class="javax.swing.JMenuItem" name="mnuUinfo">
-              <Properties>
-                <Property name="text" type="java.lang.String" value="Info"/>
-              </Properties>
             </MenuItem>
           </SubComponents>
         </Menu>
@@ -990,16 +1001,15 @@
               <Layout>
                 <DimensionLayout dim="0">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Group type="102" attributes="0">
+                      <Group type="102" alignment="0" attributes="0">
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="1" attributes="0">
+                              <Component id="pnlChkFilters" alignment="1" min="-2" max="-2" attributes="0"/>
+                              <Component id="tblSP" min="-2" pref="378" max="-2" attributes="0"/>
+                          </Group>
                           <Group type="103" groupAlignment="0" attributes="0">
-                              <Group type="102" alignment="0" attributes="0">
-                                  <EmptySpace min="-2" pref="12" max="-2" attributes="0"/>
-                                  <Component id="tblSP" min="-2" pref="378" max="-2" attributes="0"/>
+                              <Group type="102" attributes="0">
                                   <Group type="103" groupAlignment="0" attributes="0">
-                                      <Group type="102" alignment="0" attributes="0">
-                                          <EmptySpace type="unrelated" max="-2" attributes="0"/>
-                                          <Component id="pnlInvoice" max="32767" attributes="0"/>
-                                      </Group>
                                       <Group type="102" attributes="0">
                                           <Group type="103" groupAlignment="0" attributes="0">
                                               <Group type="102" alignment="0" attributes="0">
@@ -1008,19 +1018,31 @@
                                               </Group>
                                               <Group type="102" alignment="0" attributes="0">
                                                   <EmptySpace type="separate" max="-2" attributes="0"/>
-                                                  <Component id="chkInvoice" min="-2" max="-2" attributes="0"/>
+                                                  <Component id="jLabel33" min="-2" max="-2" attributes="0"/>
                                               </Group>
                                           </Group>
                                           <EmptySpace min="0" pref="55" max="32767" attributes="0"/>
                                       </Group>
+                                      <Group type="102" alignment="0" attributes="0">
+                                          <EmptySpace max="-2" attributes="0"/>
+                                          <Group type="103" groupAlignment="0" attributes="0">
+                                              <Group type="102" attributes="0">
+                                                  <Component id="chkInvoice" min="-2" max="-2" attributes="0"/>
+                                                  <EmptySpace min="0" pref="0" max="32767" attributes="0"/>
+                                              </Group>
+                                              <Component id="pnlInvoice" max="32767" attributes="0"/>
+                                              <Component id="lblChkTotal" alignment="1" max="32767" attributes="0"/>
+                                          </Group>
+                                      </Group>
                                   </Group>
+                                  <EmptySpace max="-2" attributes="0"/>
                               </Group>
                               <Group type="102" alignment="0" attributes="0">
-                                  <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="pnlChkFilters" max="32767" attributes="0"/>
+                                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                  <Component id="btnChkClear" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace max="32767" attributes="0"/>
                               </Group>
                           </Group>
-                          <EmptySpace max="-2" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -1028,20 +1050,26 @@
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="0" attributes="0">
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="pnlChkFilters" max="32767" attributes="0"/>
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Component id="pnlChkFilters" max="32767" attributes="0"/>
+                              <Group type="102" attributes="0">
+                                  <Component id="jLabel33" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                                  <Component id="lblChkTotal" min="-2" max="-2" attributes="0"/>
+                              </Group>
+                          </Group>
+                          <EmptySpace max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" attributes="0">
                               <Group type="102" attributes="0">
-                                  <EmptySpace min="-2" pref="24" max="-2" attributes="0"/>
+                                  <Component id="btnChkClear" min="-2" max="-2" attributes="0"/>
+                                  <EmptySpace min="-2" pref="6" max="-2" attributes="0"/>
                                   <Component id="chkInvoice" min="-2" max="-2" attributes="0"/>
-                                  <EmptySpace type="separate" max="-2" attributes="0"/>
+                                  <EmptySpace type="unrelated" max="-2" attributes="0"/>
                                   <Component id="pnlInvoice" min="-2" max="-2" attributes="0"/>
                                   <EmptySpace max="-2" attributes="0"/>
                                   <Component id="btnCheckDone" min="-2" pref="57" max="-2" attributes="0"/>
                               </Group>
-                              <Group type="102" attributes="0">
-                                  <EmptySpace max="-2" attributes="0"/>
-                                  <Component id="tblSP" min="-2" pref="324" max="-2" attributes="0"/>
-                              </Group>
+                              <Component id="tblSP" min="-2" pref="324" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace min="-2" pref="12" max="-2" attributes="0"/>
                       </Group>
@@ -1053,7 +1081,7 @@
 
                   <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
                   <SubComponents>
-                    <Component class="javax.swing.JTable" name="tblCheckout">
+                    <Component class="javax.swing.JTable" name="tblChk">
                       <Properties>
                         <Property name="model" type="javax.swing.table.TableModel" editor="org.netbeans.modules.form.editors2.TableModelEditor">
                           <Table columnCount="6" rowCount="0">
@@ -1089,7 +1117,9 @@
                         </Property>
                       </Properties>
                       <AuxValues>
-                        <AuxValue name="JavaCodeGenerator_InitCodePre" type="java.lang.String" value="tblCheckout.setAutoCreateRowSorter(true);"/>
+                        <AuxValue name="JavaCodeGenerator_AddingCodePre" type="java.lang.String" value="&#xd;&#xa; "/>
+                        <AuxValue name="JavaCodeGenerator_InitCodePost" type="java.lang.String" value="javax.swing.table.TableColumnModel tcmChk = tblChk.getColumnModel();&#xd;&#xa;tcmChk.getColumn(0).setPreferredWidth(30);&#xd;&#xa;tcmChk.getColumn(1).setPreferredWidth(200);&#xd;&#xa;tcmChk.getColumn(2).setPreferredWidth(30);&#xd;&#xa;tcmChk.getColumn(3).setPreferredWidth(200);&#xd;&#xa;tcmChk.getColumn(4).setPreferredWidth(35);&#xd;&#xa;tcmChk.getColumn(5).setPreferredWidth(95);&#xd;&#xa;"/>
+                        <AuxValue name="JavaCodeGenerator_InitCodePre" type="java.lang.String" value="tblChk.setAutoCreateRowSorter(true);&#xd;&#xa;tblChk.putClientProperty(&quot;terminateEditOnFocusLost&quot;, Boolean.TRUE);"/>
                       </AuxValues>
                     </Component>
                   </SubComponents>
@@ -1277,14 +1307,14 @@
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Component id="jLabel31" min="-2" max="-2" attributes="0"/>
                                   <Group type="103" alignment="0" groupAlignment="0" max="-2" attributes="0">
-                                      <Component id="txtProdIdFilter" max="32767" attributes="0"/>
-                                      <Component id="txtCatIdFilter" min="-2" pref="57" max="-2" attributes="0"/>
+                                      <Component id="txtFilterProdId" max="32767" attributes="0"/>
+                                      <Component id="txtFilterCatId" min="-2" pref="57" max="-2" attributes="0"/>
                                   </Group>
                               </Group>
                               <EmptySpace type="unrelated" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
-                                  <Component id="txtCatNameFilter" alignment="1" min="-2" pref="155" max="-2" attributes="0"/>
-                                  <Component id="txtProdNameFilter" alignment="1" min="-2" pref="155" max="-2" attributes="0"/>
+                                  <Component id="txtFilterCatName" alignment="1" min="-2" pref="155" max="-2" attributes="0"/>
+                                  <Component id="txtFilterProdName" alignment="1" min="-2" pref="155" max="-2" attributes="0"/>
                                   <Component id="jLabel32" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace type="separate" max="-2" attributes="0"/>
@@ -1305,15 +1335,15 @@
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="3" attributes="0">
-                                  <Component id="txtCatNameFilter" alignment="3" min="-2" pref="27" max="-2" attributes="0"/>
-                                  <Component id="txtCatIdFilter" alignment="3" min="-2" pref="27" max="-2" attributes="0"/>
+                                  <Component id="txtFilterCatName" alignment="3" min="-2" pref="27" max="-2" attributes="0"/>
+                                  <Component id="txtFilterCatId" alignment="3" min="-2" pref="27" max="-2" attributes="0"/>
                                   <Component id="jLabel29" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="btnClearCatF" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
                               <EmptySpace max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="3" attributes="0">
-                                  <Component id="txtProdIdFilter" alignment="3" min="-2" pref="27" max="-2" attributes="0"/>
-                                  <Component id="txtProdNameFilter" alignment="3" min="-2" pref="27" max="-2" attributes="0"/>
+                                  <Component id="txtFilterProdId" alignment="3" min="-2" pref="27" max="-2" attributes="0"/>
+                                  <Component id="txtFilterProdName" alignment="3" min="-2" pref="27" max="-2" attributes="0"/>
                                   <Component id="jLabel30" alignment="3" min="-2" max="-2" attributes="0"/>
                                   <Component id="btnClearProdF" alignment="3" min="-2" max="-2" attributes="0"/>
                               </Group>
@@ -1323,7 +1353,7 @@
                     </DimensionLayout>
                   </Layout>
                   <SubComponents>
-                    <Component class="javax.swing.JTextField" name="txtCatIdFilter">
+                    <Component class="javax.swing.JTextField" name="txtFilterCatId">
                     </Component>
                     <Component class="javax.swing.JLabel" name="jLabel29">
                       <Properties>
@@ -1335,11 +1365,11 @@
                         <Property name="text" type="java.lang.String" value="ID"/>
                       </Properties>
                     </Component>
-                    <Component class="javax.swing.JTextField" name="txtProdIdFilter">
+                    <Component class="javax.swing.JTextField" name="txtFilterProdId">
                     </Component>
-                    <Component class="javax.swing.JTextField" name="txtCatNameFilter">
+                    <Component class="javax.swing.JTextField" name="txtFilterCatName">
                     </Component>
-                    <Component class="javax.swing.JTextField" name="txtProdNameFilter">
+                    <Component class="javax.swing.JTextField" name="txtFilterProdName">
                     </Component>
                     <Component class="javax.swing.JLabel" name="jLabel30">
                       <Properties>
@@ -1355,14 +1385,45 @@
                       <Properties>
                         <Property name="text" type="java.lang.String" value="Clear"/>
                       </Properties>
+                      <Events>
+                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnClearCatFActionPerformed"/>
+                      </Events>
                     </Component>
                     <Component class="javax.swing.JButton" name="btnClearProdF">
                       <Properties>
                         <Property name="text" type="java.lang.String" value="Clear"/>
                       </Properties>
+                      <Events>
+                        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnClearProdFActionPerformed"/>
+                      </Events>
                     </Component>
                   </SubComponents>
                 </Container>
+                <Component class="javax.swing.JLabel" name="jLabel33">
+                  <Properties>
+                    <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                      <Font name="Tahoma" size="16" style="0"/>
+                    </Property>
+                    <Property name="text" type="java.lang.String" value="Current total:"/>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JLabel" name="lblChkTotal">
+                  <Properties>
+                    <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                      <Font name="Tahoma" size="18" style="0"/>
+                    </Property>
+                    <Property name="horizontalAlignment" type="int" value="0"/>
+                    <Property name="text" type="java.lang.String" value="0.00"/>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JButton" name="btnChkClear">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="Remove all"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnChkClearActionPerformed"/>
+                  </Events>
+                </Component>
               </SubComponents>
             </Container>
             <Container class="javax.swing.JPanel" name="pnlReports">
@@ -1577,7 +1638,7 @@
                               <Component id="btnLogin" min="-2" pref="94" max="-2" attributes="0"/>
                           </Group>
                       </Group>
-                      <EmptySpace pref="198" max="32767" attributes="0"/>
+                      <EmptySpace pref="256" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -1605,7 +1666,7 @@
                               <Component id="btnLogin" min="-2" pref="33" max="-2" attributes="0"/>
                           </Group>
                       </Group>
-                      <EmptySpace pref="157" max="32767" attributes="0"/>
+                      <EmptySpace pref="236" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -1624,6 +1685,9 @@
                   <Font name="Tahoma" size="16" style="0"/>
                 </Property>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="txtPassActionPerformed"/>
+              </Events>
             </Component>
             <Component class="javax.swing.JLabel" name="lblUser">
               <Properties>

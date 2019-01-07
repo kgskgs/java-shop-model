@@ -13,6 +13,7 @@ import java.util.concurrent.BlockingQueue;
 
 /**
  * Thread used to insert/update in the database 
+ * Also hold miscellaneous functions for database user administration
  * @author K1
  */
 public class DBwriteThread extends Thread {
@@ -45,15 +46,15 @@ public class DBwriteThread extends Thread {
     public void run() {
         System.out.println(Thread.currentThread().getName() + " runs");
         try{
-            while((tmpQueryStr = queryStrQueue.take()) != "end"){
+            while(!"end".equals(tmpQueryStr = queryStrQueue.take())){
                 try {
                         System.out.println(tmpQueryStr);
-                        if (tmpQueryStr != "fc"){
+                        if (!"fc".equals(tmpQueryStr)){
                             state.addBatch(tmpQueryStr);
                             queryC++;
                         }
 
-                        if(queryC >= BATCH_EXEC_SIZE || tmpQueryStr == "fc"){ 
+                        if(queryC >= BATCH_EXEC_SIZE || "fc".equals(tmpQueryStr)){ 
                             state.executeBatch();
                             reportCommit();
                             queryC = 0;
@@ -80,8 +81,10 @@ public class DBwriteThread extends Thread {
         int key = -1;
         ResultSet rs;
         
+        System.out.println(sqlStr);
+        
         try {
-            System.out.println(Thread.currentThread().getName() +": commiting 1 statements to database");
+            System.out.println(Thread.currentThread().getName() +": commiting 1 statement to database");
             state.executeUpdate(sqlStr, Statement.RETURN_GENERATED_KEYS);
             
             rs = state.getGeneratedKeys();
@@ -172,6 +175,16 @@ public class DBwriteThread extends Thread {
             throw new java.lang.IllegalArgumentException("rank value must be 0 or 1");
         String role = (rank == 0)? "shop_cashier" : "shop_manager"; 
         return String.format("REVOKE '%s' FROM '%s'@'localhost'", role, usr);
+    }
+    
+    /**
+     * formats sql command to set new password
+     * @param usr username
+     * @param pass new password
+     * @return  sql statement string
+     */
+    public static String getSetPasswordStr(String usr, String pass){
+        return String.format("SET PASSWORD FOR '%s'@'localhost' = '%s'", usr, pass);
     }
     
 }

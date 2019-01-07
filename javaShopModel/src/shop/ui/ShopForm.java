@@ -6,14 +6,17 @@
 package shop.ui;
 
 import java.awt.Component;
+import java.awt.event.ActionEvent;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import javax.swing.AbstractAction;
 import javax.swing.DefaultListModel;
 import javax.swing.DefaultListSelectionModel;
 import javax.swing.JLayeredPane;
@@ -23,6 +26,7 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.RowFilter;
 import javax.swing.RowFilter.ComparisonType;
+import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
@@ -55,6 +59,13 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     public static final int PNL_PRODUCTS = 1;
     public static final int PNL_CHECKOUT = 2;
     
+    private double chkTotal = 0.00;
+    
+    private Employee me;
+    
+    private HashMap <Integer, Shop> shopsDict;
+    private HashMap <Integer, String> prodNames;
+    
     //model entities
     //invoice
     private ArrayList<Client> clients;
@@ -72,20 +83,30 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     private ArrayList<Employee> employees;
     private MySqlRepository<Shop> shopRepository;
     private MySqlRepository<Employee> empRepository;
+    
+    //receipt
+    private MySqlRepository<Receipt> receiptRepository;
+    private MySqlRepository<BoughtProduct> boughtRepository;
      
     //ui representations of models
     private final DefaultListModel<String> lstCatsM;
     private final DefaultTableModel tblProdsM;
-    private final DefaultListSelectionModel tblProdsSM;
     private final TableRowSorter<? extends TableModel>  tblProdsRS;
+    private final DefaultListSelectionModel tblProdsSM;
     private final ListSelectionListener prodsListener;
     
     private final DefaultListModel<String> lstShopsM;
     private final DefaultTableModel tblEmpsM;
-    private final DefaultListSelectionModel tblEmpsSM;
     private final TableRowSorter<? extends TableModel>  tblEmpsRS;
+    private final DefaultListSelectionModel tblEmpsSM;
     private final ListSelectionListener empsListener;
-
+    
+    private final DefaultTableModel tblChkM;
+    private final TableRowSorter<? extends TableModel>  tblChkRS;
+    
+    private final DocChangeListener filterDocListener;
+    //private final TableModelListener tblChkML;
+    
 
     /**
      * Creates new form ShopForm, redirects os to doc
@@ -105,7 +126,13 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         tblEmpsSM = (DefaultListSelectionModel) tblEmps.getSelectionModel();
         tblEmpsRS = (TableRowSorter) tblEmps.getRowSorter();
         
-        //table list selection can't be added from netbeans gui
+        tblChkM = (DefaultTableModel) tblChk.getModel();
+        tblChkRS = (TableRowSorter) tblChk.getRowSorter();
+        
+        shopsDict = new HashMap<>();
+        prodNames = new HashMap<>();
+        
+        //listeners not provided by netbeans gui
         prodsListener = new ListSelectionListener () {
             @Override
             public void valueChanged(ListSelectionEvent e) {
@@ -119,6 +146,29 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
                 tblEmpsListSelection(e);
             }
         };
+        
+        filterDocListener = new DocChangeListener () {
+            @Override
+            public void docChanged(DocumentEvent e){
+                setChkFilter();
+            }
+        };
+        
+        AbstractAction tblChkCellChange = new AbstractAction()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                calcPrice((TableCellListener)e.getSource());
+            }
+        };
+        
+        TableCellListener tcl = new TableCellListener(tblChk, tblChkCellChange);
+        
+        txtFilterCatId.getDocument().addDocumentListener(filterDocListener);
+        txtFilterCatName.getDocument().addDocumentListener(filterDocListener);
+        txtFilterProdId.getDocument().addDocumentListener(filterDocListener);
+        txtFilterProdName.getDocument().addDocumentListener(filterDocListener);
       
         //set up log textarea
         //PrintStream os = new PrintStream(new LogDocStream(txtLog.getDocument()), true);
@@ -156,6 +206,8 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
             prodRepository = new MySqlRepository<>(Product.class, DBconnection, queryStrQueue);
             shopRepository = new MySqlRepository<>(Shop.class, DBconnection, queryStrQueue);
             empRepository = new MySqlRepository<>(Employee.class, DBconnection, queryStrQueue);
+            receiptRepository = new MySqlRepository<>(Receipt.class, DBconnection, queryStrQueue);
+            boughtRepository = new MySqlRepository<>(BoughtProduct.class, DBconnection, queryStrQueue);
             
             usrRank = dbWrite.getUniqueInt("accessLvl", "employees", "username", usr);
             
@@ -192,6 +244,8 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     //ENTITY OPERATIONS
     public void pnlShopsEnter(){
         try {
+            System.out.println(txtUser.getText());
+            
             lstShopsM.addElement("New Shop");
         
             shops = shopRepository.GetAll(0, 1000, true);
@@ -207,6 +261,9 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
             tblEmpsM.addRow(new Object[] {-1, "New Employee"});       
             for (Employee e : employees){
                 tblEmpsM.addRow(new Object[] {e.shopId, Integer.toString(e.employeeId) +" - "+ e.firstname});
+                //store currently logged in employee
+                if (e.username.equals(txtUser.getText()))
+                    me = e;
             }
             
             tblEmpsSM.addListSelectionListener(empsListener);
@@ -223,7 +280,6 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         updateModels(employees, empRepository);
         updateModels(shops, shopRepository);
         
-        shops.clear();
         employees.clear();
         
         cmbEmpShop.removeAllItems();
@@ -284,6 +340,30 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         //load invoice panel
         try {
             clients = clientRepository.GetAll(0, 1000, false);
+            categories = catRepository.GetAll(0, 1000, true);
+            products = prodRepository.GetAll(0, 1000, true);
+            
+            //get category names easily accessible
+            HashMap <Integer, String> catNames = new HashMap<>();
+            for (Category c: categories){
+                catNames.put(c.productCategoriyId, c.categoryName);
+            }
+            for (Shop s: shops){
+                shopsDict.put(s.shopId, s);
+            }
+            
+            //populate checkout table
+            for (Product p: products){
+                tblChkM.addRow(new Object[]{
+                                p.categoryId,
+                                catNames.get(p.categoryId),
+                                p.productId,
+                                p.productName,
+                                0,
+                                p.price
+                });
+                prodNames.put(p.productId, p.productName);
+            }
 
             for (Client c: clients){
                 cmbInvCname.addItem(c.clientId+": " +c.companyName +" - "+ c.firstname);
@@ -299,6 +379,10 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
      * empty used variables and reset ui; update models to db
      */
     public void pnlCheckoutExit(){
+        
+        clearTable(tblChkM);
+        
+        
         //Invoice panel
         //ui
         if(chkInvoice.isSelected())
@@ -467,6 +551,37 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         for (int i = tm.getRowCount()-1; i >= 0; i--)
             tm.removeRow(i);
     }
+        
+    /**
+     * set the filter to the checkout table from all 4 textfields
+     */
+    private void setChkFilter(){
+        ArrayList<RowFilter<Object,Object>> allFilters = new ArrayList<>();
+        String catId = txtFilterCatId.getText();
+        String catName = txtFilterCatName.getText();
+        String prodId = txtFilterProdId.getText();
+        String prodName = txtFilterProdName.getText();
+        
+        if (catId.length() > 0)
+            allFilters.add(RowFilter.regexFilter("^"+catId, 0));
+        else
+            allFilters.add(RowFilter.regexFilter(".*", 0));
+        if (catName.length() > 0)
+            allFilters.add(RowFilter.regexFilter("^"+catName, 1));
+        else
+            allFilters.add(RowFilter.regexFilter(".*", 1));
+        if (prodId.length() > 0)
+            allFilters.add(RowFilter.regexFilter("^"+prodId, 2));
+        else
+            allFilters.add(RowFilter.regexFilter(".*", 2));
+        if (prodName.length() > 0)
+            allFilters.add(RowFilter.regexFilter("^"+prodName, 3));
+        else
+            allFilters.add(RowFilter.regexFilter(".*", 3));
+        
+        if (allFilters.size() > 0)
+            tblChkRS.setRowFilter(RowFilter.andFilter(allFilters));
+    }
     
     @Override
     public void run() {
@@ -551,7 +666,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         jLabel26 = new javax.swing.JLabel();
         pnlCheckout = new javax.swing.JPanel();
         tblSP = new javax.swing.JScrollPane();
-        tblCheckout = new javax.swing.JTable();
+        tblChk = new javax.swing.JTable();
         chkInvoice = new javax.swing.JCheckBox();
         btnCheckDone = new javax.swing.JButton();
         pnlInvoice = new javax.swing.JPanel();
@@ -565,16 +680,19 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         jLabel19 = new javax.swing.JLabel();
         txtInvLname = new javax.swing.JTextField();
         pnlChkFilters = new javax.swing.JPanel();
-        txtCatIdFilter = new javax.swing.JTextField();
+        txtFilterCatId = new javax.swing.JTextField();
         jLabel29 = new javax.swing.JLabel();
         jLabel31 = new javax.swing.JLabel();
-        txtProdIdFilter = new javax.swing.JTextField();
-        txtCatNameFilter = new javax.swing.JTextField();
-        txtProdNameFilter = new javax.swing.JTextField();
+        txtFilterProdId = new javax.swing.JTextField();
+        txtFilterCatName = new javax.swing.JTextField();
+        txtFilterProdName = new javax.swing.JTextField();
         jLabel30 = new javax.swing.JLabel();
         jLabel32 = new javax.swing.JLabel();
         btnClearCatF = new javax.swing.JButton();
         btnClearProdF = new javax.swing.JButton();
+        jLabel33 = new javax.swing.JLabel();
+        lblChkTotal = new javax.swing.JLabel();
+        btnChkClear = new javax.swing.JButton();
         pnlReports = new javax.swing.JPanel();
         jLabel20 = new javax.swing.JLabel();
         cmbRepShop = new javax.swing.JComboBox<>();
@@ -602,8 +720,9 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         mnuCommit = new javax.swing.JMenuItem();
         mnuExit = new javax.swing.JMenuItem();
         mnuUserGrp = new javax.swing.JMenu();
-        mnuLogout = new javax.swing.JMenuItem();
         mnuUinfo = new javax.swing.JMenuItem();
+        mnuChangePass = new javax.swing.JMenuItem();
+        mnuLogout = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
         setFocusCycleRoot(false);
@@ -1133,8 +1252,9 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
 
         tbtMain.addTab("Products", pnlProducts);
 
-        tblCheckout.setAutoCreateRowSorter(true);
-        tblCheckout.setModel(new javax.swing.table.DefaultTableModel(
+        tblChk.setAutoCreateRowSorter(true);
+        tblChk.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
+        tblChk.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
             },
@@ -1157,15 +1277,23 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
                 return canEdit [columnIndex];
             }
         });
-        tblCheckout.getTableHeader().setReorderingAllowed(false);
-        tblSP.setViewportView(tblCheckout);
-        if (tblCheckout.getColumnModel().getColumnCount() > 0) {
-            tblCheckout.getColumnModel().getColumn(0).setResizable(false);
-            tblCheckout.getColumnModel().getColumn(0).setPreferredWidth(50);
-            tblCheckout.getColumnModel().getColumn(1).setResizable(false);
-            tblCheckout.getColumnModel().getColumn(1).setPreferredWidth(250);
-            tblCheckout.getColumnModel().getColumn(2).setResizable(false);
-            tblCheckout.getColumnModel().getColumn(2).setPreferredWidth(50);
+        tblChk.getTableHeader().setReorderingAllowed(false);
+        javax.swing.table.TableColumnModel tcmChk = tblChk.getColumnModel();
+        tcmChk.getColumn(0).setPreferredWidth(30);
+        tcmChk.getColumn(1).setPreferredWidth(200);
+        tcmChk.getColumn(2).setPreferredWidth(30);
+        tcmChk.getColumn(3).setPreferredWidth(200);
+        tcmChk.getColumn(4).setPreferredWidth(35);
+        tcmChk.getColumn(5).setPreferredWidth(95);
+
+        tblSP.setViewportView(tblChk);
+        if (tblChk.getColumnModel().getColumnCount() > 0) {
+            tblChk.getColumnModel().getColumn(0).setResizable(false);
+            tblChk.getColumnModel().getColumn(0).setPreferredWidth(50);
+            tblChk.getColumnModel().getColumn(1).setResizable(false);
+            tblChk.getColumnModel().getColumn(1).setPreferredWidth(250);
+            tblChk.getColumnModel().getColumn(2).setResizable(false);
+            tblChk.getColumnModel().getColumn(2).setPreferredWidth(50);
         }
 
         chkInvoice.setText("Invoice");
@@ -1278,8 +1406,18 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         jLabel32.setText("Name");
 
         btnClearCatF.setText("Clear");
+        btnClearCatF.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnClearCatFActionPerformed(evt);
+            }
+        });
 
         btnClearProdF.setText("Clear");
+        btnClearProdF.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnClearProdFActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout pnlChkFiltersLayout = new javax.swing.GroupLayout(pnlChkFilters);
         pnlChkFilters.setLayout(pnlChkFiltersLayout);
@@ -1294,12 +1432,12 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
                 .addGroup(pnlChkFiltersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel31)
                     .addGroup(pnlChkFiltersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                        .addComponent(txtProdIdFilter)
-                        .addComponent(txtCatIdFilter, javax.swing.GroupLayout.PREFERRED_SIZE, 57, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(txtFilterProdId)
+                        .addComponent(txtFilterCatId, javax.swing.GroupLayout.PREFERRED_SIZE, 57, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(pnlChkFiltersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(txtCatNameFilter, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(txtProdNameFilter, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txtFilterCatName, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txtFilterProdName, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel32))
                 .addGap(18, 18, 18)
                 .addGroup(pnlChkFiltersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1315,32 +1453,45 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
                     .addComponent(jLabel32))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(pnlChkFiltersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(txtCatNameFilter, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(txtCatIdFilter, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txtFilterCatName, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txtFilterCatId, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel29)
                     .addComponent(btnClearCatF))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(pnlChkFiltersLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(txtProdIdFilter, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(txtProdNameFilter, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txtFilterProdId, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(txtFilterProdName, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel30)
                     .addComponent(btnClearProdF))
                 .addGap(0, 12, Short.MAX_VALUE))
         );
+
+        jLabel33.setFont(new java.awt.Font("Tahoma", 0, 16)); // NOI18N
+        jLabel33.setText("Current total:");
+
+        lblChkTotal.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
+        lblChkTotal.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        lblChkTotal.setText("0.00");
+
+        btnChkClear.setText("Remove all");
+        btnChkClear.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnChkClearActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout pnlCheckoutLayout = new javax.swing.GroupLayout(pnlCheckout);
         pnlCheckout.setLayout(pnlCheckoutLayout);
         pnlCheckoutLayout.setHorizontalGroup(
             pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnlCheckoutLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(pnlChkFilters, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(tblSP, javax.swing.GroupLayout.PREFERRED_SIZE, 378, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGroup(pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(pnlCheckoutLayout.createSequentialGroup()
-                        .addGap(12, 12, 12)
-                        .addComponent(tblSP, javax.swing.GroupLayout.PREFERRED_SIZE, 378, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGroup(pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(pnlCheckoutLayout.createSequentialGroup()
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(pnlInvoice, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                             .addGroup(pnlCheckoutLayout.createSequentialGroup()
                                 .addGroup(pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addGroup(pnlCheckoutLayout.createSequentialGroup()
@@ -1348,29 +1499,43 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
                                         .addComponent(btnCheckDone, javax.swing.GroupLayout.PREFERRED_SIZE, 115, javax.swing.GroupLayout.PREFERRED_SIZE))
                                     .addGroup(pnlCheckoutLayout.createSequentialGroup()
                                         .addGap(18, 18, 18)
-                                        .addComponent(chkInvoice)))
-                                .addGap(0, 55, Short.MAX_VALUE))))
+                                        .addComponent(jLabel33)))
+                                .addGap(0, 55, Short.MAX_VALUE))
+                            .addGroup(pnlCheckoutLayout.createSequentialGroup()
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(pnlCheckoutLayout.createSequentialGroup()
+                                        .addComponent(chkInvoice)
+                                        .addGap(0, 0, Short.MAX_VALUE))
+                                    .addComponent(pnlInvoice, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(lblChkTotal, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                        .addContainerGap())
                     .addGroup(pnlCheckoutLayout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(pnlChkFilters, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                .addContainerGap())
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(btnChkClear)
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
         pnlCheckoutLayout.setVerticalGroup(
             pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnlCheckoutLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(pnlChkFilters, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(pnlChkFilters, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(pnlCheckoutLayout.createSequentialGroup()
+                        .addComponent(jLabel33)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(lblChkTotal)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(pnlCheckoutLayout.createSequentialGroup()
-                        .addGap(24, 24, 24)
+                        .addComponent(btnChkClear)
+                        .addGap(6, 6, 6)
                         .addComponent(chkInvoice)
-                        .addGap(18, 18, 18)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(pnlInvoice, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(btnCheckDone, javax.swing.GroupLayout.PREFERRED_SIZE, 57, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(pnlCheckoutLayout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(tblSP, javax.swing.GroupLayout.PREFERRED_SIZE, 324, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addComponent(tblSP, javax.swing.GroupLayout.PREFERRED_SIZE, 324, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(12, 12, 12))
         );
 
@@ -1476,6 +1641,11 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         txtUser.setFont(new java.awt.Font("Tahoma", 0, 16)); // NOI18N
 
         txtPass.setFont(new java.awt.Font("Tahoma", 0, 16)); // NOI18N
+        txtPass.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txtPassActionPerformed(evt);
+            }
+        });
 
         lblUser.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
         lblUser.setText("Username");
@@ -1520,7 +1690,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
                         .addComponent(txtPort, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(6, 6, 6)
                         .addComponent(btnLogin, javax.swing.GroupLayout.PREFERRED_SIZE, 94, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(198, Short.MAX_VALUE))
+                .addContainerGap(256, Short.MAX_VALUE))
         );
         pnlLoginLayout.setVerticalGroup(
             pnlLoginLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1541,7 +1711,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
                     .addGroup(pnlLoginLayout.createSequentialGroup()
                         .addGap(1, 1, 1)
                         .addComponent(btnLogin, javax.swing.GroupLayout.PREFERRED_SIZE, 33, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(157, Short.MAX_VALUE))
+                .addContainerGap(236, Short.MAX_VALUE))
         );
 
         lpMain.setLayer(tbtMain, javax.swing.JLayeredPane.DEFAULT_LAYER);
@@ -1594,6 +1764,22 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         mnuUserGrp.setText("User");
         mnuUserGrp.setEnabled(false);
 
+        mnuUinfo.setText("Info");
+        mnuUinfo.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuUinfoActionPerformed(evt);
+            }
+        });
+        mnuUserGrp.add(mnuUinfo);
+
+        mnuChangePass.setText("Change Password");
+        mnuChangePass.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                mnuChangePassActionPerformed(evt);
+            }
+        });
+        mnuUserGrp.add(mnuChangePass);
+
         mnuLogout.setText("Log out");
         mnuLogout.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -1601,9 +1787,6 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
             }
         });
         mnuUserGrp.add(mnuLogout);
-
-        mnuUinfo.setText("Info");
-        mnuUserGrp.add(mnuUinfo);
 
         jMenuBar1.add(mnuUserGrp);
 
@@ -1732,6 +1915,23 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     }
     
     /**
+     * calculate total price at checkout at products added/removed
+     * @param tcl 
+     */
+    private void calcPrice(TableCellListener tcl){
+        int newV = (int) tcl.getNewValue();
+        int oldV = (int) tcl.getOldValue();
+        if (newV >= 0){
+            double price = (double) tblChkM.getValueAt(tcl.getRow(), tcl.getColumn()+1);
+            chkTotal += (newV - oldV) * price;
+            lblChkTotal.setText(String.format("%.2f", chkTotal));
+        } else {
+            tblChkM.setValueAt(oldV, tcl.getRow(), tcl.getColumn());
+            System.out.println("Negative value entered for # products bought.. reseting");
+        }
+    }
+    
+    /**
      * when tabs are changed call the appropriate manager functions
      * @param evt 
      */
@@ -1764,48 +1964,97 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     }//GEN-LAST:event_cmbInvCnameActionPerformed
 
     private void btnCheckDoneActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCheckDoneActionPerformed
-        //invoice checked
-        if (chkInvoice.isSelected()){
-            //clients
-            int selected =  cmbInvCname.getSelectedIndex();
-            Client tmpClient;
-            Invoice inv;
-            int newInvoiceKey;
-
-            if (selected == 0){ //add new client
-                int newClientKey;
-                
-                tmpClient = new Client(txtInvEIK.getText(), 
-                        txtInvFname.getText(), 
-                        txtInvLname.getText(), 
-                        txtInvCname.getText());
-
-                //tmpClient.setNewInstance(true); - inserting immediately
-                clients.add(tmpClient);
-                
-                newClientKey = clientRepository.InsertGetKey(tmpClient);
-                tmpClient.clientId = newClientKey;
-                
-                cmbInvCname.addItem(newClientKey + ": " + tmpClient.companyName +" - "+ tmpClient.firstname);
-            } else { //update existing client
-                tmpClient = clients.get(selected - 1); //-1 since first item is 'new'
-                tmpClient.eik = txtInvEIK.getText();
-                tmpClient.firstname = txtInvFname.getText();
-                tmpClient.lastname = txtInvLname.getText();
-                tmpClient.companyName = txtInvCname.getText();
-                tmpClient.setUpdated(true);
-            }
-            //invoice
+        if(chkTotal > 0){
             String timestamp = LocalDateTime.now().format(DBtimeFormat);
+            Integer invId = null;
+              
+            //invoice checked
+            if (chkInvoice.isSelected()){
+                //clients
+                int selected =  cmbInvCname.getSelectedIndex();
+                Client tmpClient;
+
+                if (selected == 0){ //add new client
+                    int newClientKey;
+
+                    tmpClient = new Client(txtInvEIK.getText(), 
+                            txtInvFname.getText(), 
+                            txtInvLname.getText(), 
+                            txtInvCname.getText());
+
+                    //tmpClient.setNewInstance(true); - inserting immediately
+                    clients.add(tmpClient);
+
+                    newClientKey = clientRepository.InsertGetKey(tmpClient);
+                    tmpClient.clientId = newClientKey;
+
+                    cmbInvCname.addItem(newClientKey + ": " + tmpClient.companyName +" - "+ tmpClient.firstname);
+                } else { //update existing client
+                    tmpClient = clients.get(selected - 1); //-1 since first item is 'new'
+                    tmpClient.eik = txtInvEIK.getText();
+                    tmpClient.firstname = txtInvFname.getText();
+                    tmpClient.lastname = txtInvLname.getText();
+                    tmpClient.companyName = txtInvCname.getText();
+                    tmpClient.setUpdated(true);
+                }
+                //invoice
+                Invoice inv = new Invoice(tmpClient.clientId, timestamp);
+
+                invId = invoiceRepository.InsertGetKey(inv);
+                inv.invoiceId = invId;
+
+            }
             
-            inv = new Invoice(tmpClient.clientId, timestamp);
+            //receipt
+            ArrayList<BoughtProduct> boughtProds = new ArrayList<>();
+            int tmpBoughtN;
+            BoughtProduct tmpBoughtProd;
             
-            newInvoiceKey = invoiceRepository.InsertGetKey(inv);
-            inv.invoiceId = newInvoiceKey;
+            Receipt recp = new Receipt( (chkInvoice.isSelected())? 1 : 0,
+                                        invId,
+                                        me.employeeId,
+                                        timestamp);
+            recp.receiptId = receiptRepository.InsertGetKey(recp);
             
-            //resest UI 
-            chkInvoice.doClick();
-            clearTxts(pnlInvoice);
+            
+            for (int i = 0; i < tblChkM.getRowCount(); i++){
+                tmpBoughtN = (int) tblChkM.getValueAt(i, 4);
+                //System.out.println(i + " " + tmpBoughtN);
+                if (tmpBoughtN > 0){
+                    
+                    tmpBoughtProd = new BoughtProduct((int)tblChkM.getValueAt(i, 2),
+                                                        recp.receiptId,
+                                                        tmpBoughtN,
+                                                        (double)tblChkM.getValueAt(i, 5));
+                    boughtRepository.Insert(tmpBoughtProd);
+                    boughtProds.add(tmpBoughtProd);
+                }
+            }
+            Shop s = shopsDict.get(me.shopId);
+            String recptH = "Receipt #" + recp.receiptId;
+            String empH = "Agent " + me.firstname +" "+  me.lastname;
+            String empH2 = "Employee " + me.employeeId;
+            Dialogues.showReceipt(new String[] {recptH,
+                                            s.shopName, 
+                                            s.address, 
+                                            recp.buyDate,
+                                            empH,
+                                            empH2}, 
+                                boughtProds,
+                                prodNames,
+                                chkTotal);
+            
+            //resest UI
+            if (chkInvoice.isSelected()){
+                chkInvoice.doClick();
+                clearTxts(pnlInvoice);
+            }
+            btnChkClear.doClick();
+            btnClearCatF.doClick();
+            btnClearProdF.doClick();
+            
+        } else {
+            System.out.println("Nothing bought");
         }
     }//GEN-LAST:event_btnCheckDoneActionPerformed
 
@@ -2071,6 +2320,41 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         formWindowClosing(null);
     }//GEN-LAST:event_mnuExitActionPerformed
 
+    private void txtPassActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtPassActionPerformed
+        btnLogin.doClick();
+    }//GEN-LAST:event_txtPassActionPerformed
+
+    private void btnClearCatFActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnClearCatFActionPerformed
+        txtFilterCatId.setText("");
+        txtFilterCatName.setText("");
+    }//GEN-LAST:event_btnClearCatFActionPerformed
+
+    private void btnClearProdFActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnClearProdFActionPerformed
+        txtFilterProdId.setText("");
+        txtFilterProdName.setText("");
+    }//GEN-LAST:event_btnClearProdFActionPerformed
+
+    private void btnChkClearActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnChkClearActionPerformed
+        for (int i = 0; i < tblChkM.getRowCount(); i++){
+            tblChkM.setValueAt(0, i, 4); 
+        }
+        chkTotal = 0.00;
+        lblChkTotal.setText("0.00");
+    }//GEN-LAST:event_btnChkClearActionPerformed
+
+    private void mnuChangePassActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuChangePassActionPerformed
+        String pw;
+        if ((pw = Dialogues.passwordNew()) != null){
+            queryStrQueue.offer(DBwriteThread.getSetPasswordStr(me.username, pw));
+        }
+    }//GEN-LAST:event_mnuChangePassActionPerformed
+
+    private void mnuUinfoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuUinfoActionPerformed
+        Dialogues.showEmpInfo(me);
+    }//GEN-LAST:event_mnuUinfoActionPerformed
+
+    
+    
     //<editor-fold defaultstate="collapsed" desc="autogenreated variables">
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton bntRepGet;
@@ -2078,6 +2362,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     private javax.swing.JButton btnCatNew;
     private javax.swing.JButton btnCatUpdate;
     private javax.swing.JButton btnCheckDone;
+    private javax.swing.JButton btnChkClear;
     private javax.swing.JButton btnClearCatF;
     private javax.swing.JButton btnClearProdF;
     private javax.swing.JButton btnEmpDelete;
@@ -2123,6 +2408,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     private javax.swing.JLabel jLabel30;
     private javax.swing.JLabel jLabel31;
     private javax.swing.JLabel jLabel32;
+    private javax.swing.JLabel jLabel33;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
@@ -2137,12 +2423,14 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     private javax.swing.JScrollPane jScrollPane5;
     private javax.swing.JScrollPane jScrollPane6;
     private javax.swing.JScrollPane jScrollPane7;
+    private javax.swing.JLabel lblChkTotal;
     private javax.swing.JLabel lblPass;
     private javax.swing.JLabel lblPort;
     private javax.swing.JLabel lblUser;
     private javax.swing.JLayeredPane lpMain;
     private javax.swing.JList<String> lstCats;
     private javax.swing.JList<String> lstShops;
+    private javax.swing.JMenuItem mnuChangePass;
     private javax.swing.JMenuItem mnuCommit;
     private javax.swing.JMenuItem mnuExit;
     private javax.swing.JMenu mnuFileGrp;
@@ -2161,20 +2449,22 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     private javax.swing.JPanel pnlProducts;
     private javax.swing.JPanel pnlReports;
     private javax.swing.JPanel pnlShops;
-    private javax.swing.JTable tblCheckout;
+    private javax.swing.JTable tblChk;
     private javax.swing.JTable tblEmps;
     private javax.swing.JTable tblProds;
     private javax.swing.JScrollPane tblSP;
     private javax.swing.JTabbedPane tbtMain;
     private javax.swing.JTextArea txtCatDesc;
     private javax.swing.JTextField txtCatId;
-    private javax.swing.JTextField txtCatIdFilter;
     private javax.swing.JTextField txtCatName;
-    private javax.swing.JTextField txtCatNameFilter;
     private javax.swing.JTextField txtEmpId;
     private javax.swing.JTextField txtEmpName1;
     private javax.swing.JTextField txtEmpName2;
     private javax.swing.JTextField txtEmpUsr;
+    private javax.swing.JTextField txtFilterCatId;
+    private javax.swing.JTextField txtFilterCatName;
+    private javax.swing.JTextField txtFilterProdId;
+    private javax.swing.JTextField txtFilterProdName;
     private javax.swing.JTextField txtInvCname;
     private javax.swing.JTextField txtInvEIK;
     private javax.swing.JTextField txtInvFname;
@@ -2184,9 +2474,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     private javax.swing.JTextField txtPort;
     private javax.swing.JTextArea txtProdDesc;
     private javax.swing.JTextField txtProdId;
-    private javax.swing.JTextField txtProdIdFilter;
     private javax.swing.JTextField txtProdName;
-    private javax.swing.JTextField txtProdNameFilter;
     private javax.swing.JTextField txtProdPrice;
     private javax.swing.JTextField txtRepEIK;
     private javax.swing.JTextField txtRepFrom;

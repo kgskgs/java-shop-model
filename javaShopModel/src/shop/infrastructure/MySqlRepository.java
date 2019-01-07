@@ -26,14 +26,14 @@ import shop.db.DBwriteThread;
 public class MySqlRepository<T> implements IRepository<T> {
     
     protected Class<T> modelClass;
-    private final Connection sqlConnection;
+    //private final Connection sqlConnection;
     private final BlockingQueue<String> sqlQueue;
     
     private Statement state; //"By default, only one ResultSet object per Statement object can be open at the same time."
     
     public MySqlRepository(Class<T> modelClass, Connection sqlConnection, BlockingQueue<String> sqlQueue) throws SQLException{
         this.modelClass = modelClass;
-        this.sqlConnection = sqlConnection;
+        //this.sqlConnection = sqlConnection;
         this.sqlQueue = sqlQueue;
         
         state = sqlConnection.createStatement();
@@ -46,7 +46,7 @@ public class MySqlRepository<T> implements IRepository<T> {
             //getFields returns all **public** fields
             for (Field f : modelClass.getFields() ) {
                 String fieldName = f.getName();
-                if (f.getType() == int.class) {
+                if (f.getType() == int.class || f.getType() == Integer.class) {
                     f.set(modelObj, set.getInt(fieldName));
                 }
                 else if (f.getType() == String.class) {
@@ -140,6 +140,7 @@ public class MySqlRepository<T> implements IRepository<T> {
         c.CompanyName + ");";*/
                 
         StringBuilder sqlBuilder = new StringBuilder();
+        String tmpString;
 
         sqlBuilder.append("INSERT INTO ")
             .append(modelClass.getAnnotation(Table.class).Name())
@@ -150,10 +151,9 @@ public class MySqlRepository<T> implements IRepository<T> {
                 sqlBuilder.append("NULL,");
             }
             else{
-
-                    sqlBuilder.append("\"")
-                            .append(f.get(model).toString())
-                            .append("\",");
+                    tmpString = (f.get(model) == null)? "NULL" : "'"+f.get(model).toString()+"'";
+                    sqlBuilder.append(tmpString)
+                            .append(",");
 
             }
         }
@@ -164,13 +164,10 @@ public class MySqlRepository<T> implements IRepository<T> {
     
     @Override
     public void Insert(T model) {
-
         String sqlStr;
 
         try {
             sqlStr = buildInsertString(model);
-
-            //System.out.println(sqlBuilder.toString());
             sqlQueue.offer(sqlStr);     
         } catch (IllegalArgumentException | IllegalAccessException ex) {
             ex.printStackTrace();
@@ -184,19 +181,13 @@ public class MySqlRepository<T> implements IRepository<T> {
 
         try {
             sqlStr = buildInsertString(model);
-            
             key = DBwriteThread.commitGetKey(sqlStr, state);
-
-            //System.out.println(sqlBuilder.toString());
-            sqlQueue.offer(sqlStr);     
         } catch (IllegalArgumentException | IllegalAccessException ex) {
             ex.printStackTrace();
         } 
-        
         return key;
     }
     
-
     @Override
     public void Delete(int id) {
         // "DELETE FROM clients WHERE eik = '" + c.Eik + "';";

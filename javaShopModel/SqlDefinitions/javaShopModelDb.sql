@@ -40,7 +40,7 @@ CREATE TABLE invoices
 CREATE TABLE employees
 (
     employeeId  INT unsigned NOT NULL AUTO_INCREMENT,
-    username    VARCHAR(32), /*same as mysql username*/ 
+    username    VARCHAR(32) UNIQUE, /*same as mysql username*/ 
     firstname   VARCHAR(150) NOT NULL,
     lastname    VARCHAR(150) NOT NULL,
     accessLvl   TINYINT(1) unsigned NOT NULL,
