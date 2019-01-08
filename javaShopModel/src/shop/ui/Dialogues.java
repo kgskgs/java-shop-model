@@ -5,6 +5,7 @@
  */
 package shop.ui;
 
+import java.awt.Dimension;
 import java.awt.GridLayout;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -16,6 +17,8 @@ import shop.models.Receipt;
 import shop.models.BoughtProduct;
 import java.util.ArrayList;
 import java.util.HashMap;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import shop.models.Shop;
 
 /**
@@ -83,12 +86,19 @@ public class Dialogues {
                 JOptionPane.INFORMATION_MESSAGE);
     }
     
+    /**
+     * creates a text for recipt and displays it
+     * @param headers strings to be centered at the top
+     * @param bps bought products
+     * @param prodNames map product keys to names
+     * @param total total cost
+     */
     public static void showReceipt(String[] headers, ArrayList<BoughtProduct> bps, HashMap<Integer, String> prodNames, double total){
+        //format text
         int targetWidth = 50;
         
         StringBuilder text = new StringBuilder();
         int tmpOffset;
-        String tmpName;
         String tmpPrice;
         int tmpCount;
         String tmpMultipleF = "%d x %.2f";
@@ -104,10 +114,9 @@ public class Dialogues {
         text.append("\n");
         
         for(BoughtProduct bp: bps){
-            tmpName = prodNames.get(bp.productId);
             tmpCount = bp.productCount;
             
-            text.append(tmpName).append("\n");
+            text.append(prodNames.get(bp.productId)).append("\n");
             tmpMultiple = String.format(tmpMultipleF, tmpCount, bp.currentPrice);
             tmpPrice = String.format("%.2f", bp.currentPrice*tmpCount);
             text.append(String.format("%20s"+" %"+(targetWidth-21)+"s\n", tmpMultiple, tmpPrice));      
@@ -118,7 +127,16 @@ public class Dialogues {
 
         text.append(String.format("%"+targetWidth+"s", "Total: " + totalStr));
         
-        System.out.println(text);
-        
+        //System.out.println(text);
+        //display message
+        JTextArea ta = new JTextArea(text.toString());
+        ta.setEnabled(false);
+        JScrollPane sp = new JScrollPane(ta);
+
+        sp.setPreferredSize(new Dimension(426,500));
+        JOptionPane.showMessageDialog(null, sp);
+        Dimension dim = sp.getSize();
+        System.out.println(dim.width);
+        System.out.println(dim.height);
     }
 }
