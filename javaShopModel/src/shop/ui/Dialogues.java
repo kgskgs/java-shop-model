@@ -5,6 +5,7 @@
  */
 package shop.ui;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import javax.swing.JLabel;
@@ -19,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import shop.models.Client;
 import shop.models.Shop;
 
 /**
@@ -87,7 +89,7 @@ public class Dialogues {
     }
     
     /**
-     * creates a text for recipt and displays it
+     * creates a text for receipt and displays it
      * @param headers strings to be centered at the top
      * @param bps bought products
      * @param prodNames map product keys to names
@@ -98,20 +100,14 @@ public class Dialogues {
         int targetWidth = 50;
         
         StringBuilder text = new StringBuilder();
-        int tmpOffset;
+        
         String tmpPrice;
         int tmpCount;
         String tmpMultipleF = "%d x %.2f";
         String tmpMultiple;
         
-        for(int i = 0; i < headers.length; i++){
-            tmpOffset = targetWidth/2 + headers[i].length()/2;
-            text.append(String.format("%"+tmpOffset+"s\n", headers[i]));
-            if(i == 0 || i == 3)
-                text.append("\n");
-        }
+        formatHeaders(text, headers, targetWidth);
         
-        text.append("\n");
         
         for(BoughtProduct bp: bps){
             tmpCount = bp.productCount;
@@ -131,12 +127,54 @@ public class Dialogues {
         //display message
         JTextArea ta = new JTextArea(text.toString());
         ta.setEnabled(false);
-        JScrollPane sp = new JScrollPane(ta);
+        ta.setDisabledTextColor(Color.black);
 
+        JScrollPane sp = new JScrollPane(ta);
         sp.setPreferredSize(new Dimension(426,500));
-        JOptionPane.showMessageDialog(null, sp);
-        Dimension dim = sp.getSize();
-        System.out.println(dim.width);
-        System.out.println(dim.height);
+        
+        JOptionPane.showMessageDialog(null, sp, "Receipt", JOptionPane.INFORMATION_MESSAGE);
+//        Dimension dim = sp.getSize();
+//        System.out.println(dim.width);
+//        System.out.println(dim.height);
+    }
+    
+    public static void showInvoice(String[] headers, Client c, Receipt r, Double price){
+        int targetWidth=75;
+        
+        StringBuilder text = new StringBuilder();
+        formatHeaders(text, headers, targetWidth);
+        
+        text.append(String.format("%-25s%25s%25s\n", "Buyer", c.firstname, c.lastname));
+        text.append(String.format("%-25s%50s\n", "Company", c.companyName));
+        text.append(String.format("%-25s%50s\n", "EIK", c.eik));
+        text.append(String.format("%-25s%50.2f\n", "Pice", price));
+        
+        JTextArea ta = new JTextArea(text.toString());
+        ta.setEnabled(false);
+        ta.setDisabledTextColor(Color.black);
+
+        JScrollPane sp = new JScrollPane(ta);
+         
+        JOptionPane.showMessageDialog(null, sp, "Invoice", JOptionPane.INFORMATION_MESSAGE);
+    }
+    
+    /**
+     * formats an array of strings to be centered according to a desired
+     * maximum width of a line
+     * @param text string builder to collect the result
+     * @param headers texts to format
+     * @param targetWidth target line width
+     */
+    private static void formatHeaders(StringBuilder text, String[] headers, int targetWidth){
+        int tmpOffset;
+        
+        for(int i = 0; i < headers.length; i++){
+            tmpOffset = targetWidth/2 + headers[i].length()/2;
+            text.append(String.format("%"+tmpOffset+"s\n", headers[i]));
+            if(i == 0 || i == 3)
+                text.append("\n");
+        }
+        
+        text.append("\n");    
     }
 }

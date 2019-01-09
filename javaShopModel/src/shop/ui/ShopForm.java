@@ -1966,13 +1966,15 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     private void btnCheckDoneActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCheckDoneActionPerformed
         if(chkTotal > 0){
             String timestamp = LocalDateTime.now().format(DBtimeFormat);
-            Integer invId = null;
+            //Integer invId = null;
+            Client tmpClient = null;
+            Invoice inv = null;
               
             //invoice checked
             if (chkInvoice.isSelected()){
                 //clients
                 int selected =  cmbInvCname.getSelectedIndex();
-                Client tmpClient;
+                
 
                 if (selected == 0){ //add new client
                     int newClientKey;
@@ -1998,17 +2000,15 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
                     tmpClient.setUpdated(true);
                 }
                 //invoice
-                Invoice inv = new Invoice(tmpClient.clientId, timestamp);
-
-                invId = invoiceRepository.InsertGetKey(inv);
-                inv.invoiceId = invId;
-
+                inv = new Invoice(tmpClient.clientId, timestamp);
+                inv.invoiceId = invoiceRepository.InsertGetKey(inv);
             }
             
             //receipt
             ArrayList<BoughtProduct> boughtProds = new ArrayList<>();
             int tmpBoughtN;
             BoughtProduct tmpBoughtProd;
+            Integer invId = (inv == null)? null : inv.invoiceId;
             
             Receipt recp = new Receipt( (chkInvoice.isSelected())? 1 : 0,
                                         invId,
@@ -2046,6 +2046,11 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
             
             //resest UI
             if (chkInvoice.isSelected()){
+                //show invoice
+                String invH = "Invoice #"+recp.invoiceId;
+                String invHr = "For receipt #"+recp.receiptId;
+                Dialogues.showInvoice(new String[] {s.shopName,invH,invHr}, tmpClient, recp, chkTotal);
+                
                 chkInvoice.doClick();
                 clearTxts(pnlInvoice);
             }

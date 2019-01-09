@@ -11,7 +11,7 @@ import shop.infrastructure.interfaces.Table;
  *
  * @author k
  */
-@Table(Name = "boughtproducts")
+@Table(Name = "boughtProducts")
 public class BoughtProduct extends Model{
     public int productId;
     public int receiptId;
