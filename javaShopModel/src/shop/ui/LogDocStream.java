@@ -44,20 +44,23 @@ public class LogDocStream extends OutputStream{
         //make timestamp
         String timestamp = LocalTime.now().format(timeFormat);
         String msgS = new String(b, off, len);
-        
-        String message = String.format("<%s> %s\n", timestamp, msgS); //%s - Thread.currentThread().getName(),
-        
-        //write from swing's event thread 
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    logDoc.insertString(docOffset, message, null);
-                } catch (BadLocationException ex) {
-                    ex.printStackTrace();
+        if (!"\n".equals(msgS)){
+            msgS = msgS.replaceAll("\n", "");
+
+            String message = String.format("<%s> %s\n", timestamp, msgS); //%s - Thread.currentThread().getName(),
+
+            //write from swing's event thread 
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        logDoc.insertString(docOffset, message, null);
+                    } catch (BadLocationException ex) {
+                        System.out.println(ex.getMessage()); //ex.printStackTrace();
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
     //need to overrride, but shouldn't be used
@@ -70,7 +73,7 @@ public class LogDocStream extends OutputStream{
                     try {
                         logDoc.insertString(docOffset, String.valueOf((char)b), null);
                     } catch (BadLocationException ex) {
-                        ex.printStackTrace(); 
+                        System.out.println(ex.getMessage()); //ex.printStackTrace(); 
                     }
                 }
             });

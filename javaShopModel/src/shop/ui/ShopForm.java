@@ -7,6 +7,7 @@ package shop.ui;
 
 import java.awt.Component;
 import java.awt.event.ActionEvent;
+import java.io.PrintStream;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
@@ -171,9 +172,9 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         txtFilterProdName.getDocument().addDocumentListener(filterDocListener);
       
         //set up log textarea
-        //PrintStream os = new PrintStream(new LogDocStream(txtLog.getDocument()), true);
-        //System.setOut(os);
-        //System.setErr(os);
+        PrintStream os = new PrintStream(new LogDocStream(txtLog.getDocument()), true);
+        System.setOut(os);
+        System.setErr(os);
         
         //set up database connection vars
         queryStrQueue = new LinkedBlockingQueue<>();  
@@ -215,7 +216,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
            
             return true;
         } catch (ClassNotFoundException | SQLException ex) {
-            ex.printStackTrace();
+            System.out.println(ex.getMessage()); //ex.printStackTrace();
             return false;
         }
     }
@@ -236,7 +237,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
             try {
                 dbWrite.join();
             } catch (InterruptedException ex) {
-                ex.printStackTrace();
+                System.out.println(ex.getMessage()); //ex.printStackTrace();
             }
         }
     }
@@ -244,7 +245,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     //ENTITY OPERATIONS
     public void pnlShopsEnter(){
         try {
-            System.out.println(txtUser.getText());
+            //System.out.println(txtUser.getText());
             
             lstShopsM.addElement("New Shop");
         
@@ -270,7 +271,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
             lstShops.setSelectedIndex(0);
             
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            System.out.println(ex.getMessage()); //ex.printStackTrace();
         } 
     }
     
@@ -311,7 +312,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
             lstCats.setSelectedIndex(0);
             
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            System.out.println(ex.getMessage()); //ex.printStackTrace();
         }
     }
     
@@ -370,7 +371,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
             }  
             
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            System.out.println(ex.getMessage()); //ex.printStackTrace();
         }
     }
     
@@ -1486,9 +1487,9 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
             pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnlCheckoutLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(pnlChkFilters, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(tblSP, javax.swing.GroupLayout.PREFERRED_SIZE, 378, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(pnlChkFilters, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(tblSP, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                 .addGroup(pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(pnlCheckoutLayout.createSequentialGroup()
                         .addGroup(pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1605,8 +1606,8 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
                             .addComponent(jLabel24)))
                     .addGroup(pnlReportsLayout.createSequentialGroup()
                         .addGap(215, 215, 215)
-                        .addComponent(bntRepGet, javax.swing.GroupLayout.PREFERRED_SIZE, 115, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(154, Short.MAX_VALUE))
+                        .addComponent(bntRepGet, javax.swing.GroupLayout.PREFERRED_SIZE, 138, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(206, Short.MAX_VALUE))
         );
         pnlReportsLayout.setVerticalGroup(
             pnlReportsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1920,14 +1921,19 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
      */
     private void calcPrice(TableCellListener tcl){
         int newV = (int) tcl.getNewValue();
-        int oldV = (int) tcl.getOldValue();
-        if (newV >= 0){
-            double price = (double) tblChkM.getValueAt(tcl.getRow(), tcl.getColumn()+1);
-            chkTotal += (newV - oldV) * price;
-            lblChkTotal.setText(String.format("%.2f", chkTotal));
-        } else {
-            tblChkM.setValueAt(oldV, tcl.getRow(), tcl.getColumn());
-            System.out.println("Negative value entered for # products bought.. reseting");
+        try{
+            int oldV = (int) tcl.getOldValue();
+            if (newV >= 0){
+                double price = (double) tblChkM.getValueAt(tcl.getRow(), tcl.getColumn()+1);
+                chkTotal += (newV - oldV) * price;
+                lblChkTotal.setText(String.format("%.2f", chkTotal));
+            } else {
+                tblChkM.setValueAt(oldV, tcl.getRow(), tcl.getColumn());
+                System.out.println("Negative value entered for # products bought.. reseting");
+            }
+        } catch (java.lang.NullPointerException ex){
+            System.out.print("Old value of cell blank, reseting to 0");
+            tblChkM.setValueAt(0, tcl.getRow(), tcl.getColumn());
         }
     }
     
@@ -1965,99 +1971,102 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
 
     private void btnCheckDoneActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCheckDoneActionPerformed
         if(chkTotal > 0){
-            String timestamp = LocalDateTime.now().format(DBtimeFormat);
-            //Integer invId = null;
-            Client tmpClient = null;
-            Invoice inv = null;
-              
-            //invoice checked
-            if (chkInvoice.isSelected()){
-                //clients
-                int selected =  cmbInvCname.getSelectedIndex();
-                
+            try{
+                String timestamp = LocalDateTime.now().format(DBtimeFormat);
+                //Integer invId = null;
+                Client tmpClient = null;
+                Invoice inv = null;
 
-                if (selected == 0){ //add new client
-                    int newClientKey;
+                //invoice checked
+                if (chkInvoice.isSelected()){
+                    //clients
+                    int selected =  cmbInvCname.getSelectedIndex();
 
-                    tmpClient = new Client(txtInvEIK.getText(), 
-                            txtInvFname.getText(), 
-                            txtInvLname.getText(), 
-                            txtInvCname.getText());
 
-                    //tmpClient.setNewInstance(true); - inserting immediately
-                    clients.add(tmpClient);
+                    if (selected == 0){ //add new client
+                        int newClientKey;
 
-                    newClientKey = clientRepository.InsertGetKey(tmpClient);
-                    tmpClient.clientId = newClientKey;
+                        tmpClient = new Client(txtInvEIK.getText(), 
+                                txtInvFname.getText(), 
+                                txtInvLname.getText(), 
+                                txtInvCname.getText());
 
-                    cmbInvCname.addItem(newClientKey + ": " + tmpClient.companyName +" - "+ tmpClient.firstname);
-                } else { //update existing client
-                    tmpClient = clients.get(selected - 1); //-1 since first item is 'new'
-                    tmpClient.eik = txtInvEIK.getText();
-                    tmpClient.firstname = txtInvFname.getText();
-                    tmpClient.lastname = txtInvLname.getText();
-                    tmpClient.companyName = txtInvCname.getText();
-                    tmpClient.setUpdated(true);
+                        //tmpClient.setNewInstance(true); - inserting immediately
+                        clients.add(tmpClient);
+
+                        newClientKey = clientRepository.InsertGetKey(tmpClient);
+                        tmpClient.clientId = newClientKey;
+
+                        cmbInvCname.addItem(newClientKey + ": " + tmpClient.companyName +" - "+ tmpClient.firstname);
+                    } else { //update existing client
+                        tmpClient = clients.get(selected - 1); //-1 since first item is 'new'
+                        tmpClient.eik = txtInvEIK.getText();
+                        tmpClient.firstname = txtInvFname.getText();
+                        tmpClient.lastname = txtInvLname.getText();
+                        tmpClient.companyName = txtInvCname.getText();
+                        tmpClient.setUpdated(true);
+                    }
+                    //invoice
+                    inv = new Invoice(tmpClient.clientId, timestamp);
+                    inv.invoiceId = invoiceRepository.InsertGetKey(inv);
                 }
-                //invoice
-                inv = new Invoice(tmpClient.clientId, timestamp);
-                inv.invoiceId = invoiceRepository.InsertGetKey(inv);
-            }
-            
-            //receipt
-            ArrayList<BoughtProduct> boughtProds = new ArrayList<>();
-            int tmpBoughtN;
-            BoughtProduct tmpBoughtProd;
-            Integer invId = (inv == null)? null : inv.invoiceId;
-            
-            Receipt recp = new Receipt( (chkInvoice.isSelected())? 1 : 0,
-                                        invId,
-                                        me.employeeId,
-                                        timestamp);
-            recp.receiptId = receiptRepository.InsertGetKey(recp);
-            
-            
-            for (int i = 0; i < tblChkM.getRowCount(); i++){
-                tmpBoughtN = (int) tblChkM.getValueAt(i, 4);
-                //System.out.println(i + " " + tmpBoughtN);
-                if (tmpBoughtN > 0){
-                    
-                    tmpBoughtProd = new BoughtProduct((int)tblChkM.getValueAt(i, 2),
-                                                        recp.receiptId,
-                                                        tmpBoughtN,
-                                                        (double)tblChkM.getValueAt(i, 5));
-                    boughtRepository.Insert(tmpBoughtProd);
-                    boughtProds.add(tmpBoughtProd);
+
+                //receipt
+                ArrayList<BoughtProduct> boughtProds = new ArrayList<>();
+                int tmpBoughtN;
+                BoughtProduct tmpBoughtProd;
+                Integer invId = (inv == null)? null : inv.invoiceId;
+
+                Receipt recp = new Receipt( (chkInvoice.isSelected())? 1 : 0,
+                                            invId,
+                                            me.employeeId,
+                                            timestamp);
+                recp.receiptId = receiptRepository.InsertGetKey(recp);
+
+
+                for (int i = 0; i < tblChkM.getRowCount(); i++){
+                    tmpBoughtN = (int) tblChkM.getValueAt(i, 4);
+                    //System.out.println(i + " " + tmpBoughtN);
+                    if (tmpBoughtN > 0){
+
+                        tmpBoughtProd = new BoughtProduct((int)tblChkM.getValueAt(i, 2),
+                                                            recp.receiptId,
+                                                            tmpBoughtN,
+                                                            (double)tblChkM.getValueAt(i, 5));
+                        boughtRepository.Insert(tmpBoughtProd);
+                        boughtProds.add(tmpBoughtProd);
+                    }
                 }
+                Shop s = shopsDict.get(me.shopId);
+                String recptH = "Receipt #" + recp.receiptId;
+                String empH = "Agent " + me.firstname +" "+  me.lastname;
+                String empH2 = "Employee " + me.employeeId;
+                Dialogues.showReceipt(new String[] {recptH,
+                                                s.shopName, 
+                                                s.address, 
+                                                recp.buyDate,
+                                                empH,
+                                                empH2}, 
+                                    boughtProds,
+                                    prodNames,
+                                    chkTotal);
+
+                //resest UI
+                if (chkInvoice.isSelected()){
+                    //show invoice
+                    String invH = "Invoice #"+recp.invoiceId;
+                    String invHr = "For receipt #"+recp.receiptId;
+                    Dialogues.showInvoice(new String[] {s.shopName,invH,invHr}, tmpClient, recp, chkTotal);
+
+                    chkInvoice.doClick();
+                    clearTxts(pnlInvoice);
+                }
+                btnChkClear.doClick();
+                btnClearCatF.doClick();
+                btnClearProdF.doClick();
+            } catch (java.lang.NullPointerException ex){
+                System.out.println("Invalid value(s) in table");
             }
-            Shop s = shopsDict.get(me.shopId);
-            String recptH = "Receipt #" + recp.receiptId;
-            String empH = "Agent " + me.firstname +" "+  me.lastname;
-            String empH2 = "Employee " + me.employeeId;
-            Dialogues.showReceipt(new String[] {recptH,
-                                            s.shopName, 
-                                            s.address, 
-                                            recp.buyDate,
-                                            empH,
-                                            empH2}, 
-                                boughtProds,
-                                prodNames,
-                                chkTotal);
-            
-            //resest UI
-            if (chkInvoice.isSelected()){
-                //show invoice
-                String invH = "Invoice #"+recp.invoiceId;
-                String invHr = "For receipt #"+recp.receiptId;
-                Dialogues.showInvoice(new String[] {s.shopName,invH,invHr}, tmpClient, recp, chkTotal);
-                
-                chkInvoice.doClick();
-                clearTxts(pnlInvoice);
-            }
-            btnChkClear.doClick();
-            btnClearCatF.doClick();
-            btnClearProdF.doClick();
-            
         } else {
             System.out.println("Nothing bought");
         }
@@ -2277,7 +2286,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     private void btnEmpNewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEmpNewActionPerformed
         String pwd = Dialogues.passwordNew();
         if (pwd != null){
-            int shopId = shops.get(lstShops.getSelectedIndex()-1).shopId;
+            int shopId = shops.get(cmbEmpShop.getSelectedIndex()).shopId;
             Employee e = new Employee(txtEmpUsr.getText(), 
                                 txtEmpName1.getText(),
                                 txtEmpName2.getText(),
