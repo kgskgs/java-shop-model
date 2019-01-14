@@ -174,7 +174,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         //set up log textarea
         PrintStream os = new PrintStream(new LogDocStream(txtLog.getDocument()), true);
         System.setOut(os);
-        System.setErr(os);
+        //System.setErr(os);
         
         //set up database connection vars
         queryStrQueue = new LinkedBlockingQueue<>();  
@@ -1972,6 +1972,11 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     private void btnCheckDoneActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCheckDoneActionPerformed
         if(chkTotal > 0){
             try{
+                //below script ensures only integers have been entered in the table
+                int checkValid;
+                for (int i = 0; i < tblChkM.getRowCount(); i++)
+                    checkValid = (int) tblChkM.getValueAt(i, 4);
+                
                 String timestamp = LocalDateTime.now().format(DBtimeFormat);
                 //Integer invId = null;
                 Client tmpClient = null;
