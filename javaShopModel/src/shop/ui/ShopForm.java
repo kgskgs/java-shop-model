@@ -2054,7 +2054,8 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
                                                 empH2}, 
                                     boughtProds,
                                     prodNames,
-                                    chkTotal);
+                                    chkTotal,
+                                    recp.receiptId);
 
                 //resest UI
                 if (chkInvoice.isSelected()){
