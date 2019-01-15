@@ -251,4 +251,20 @@ public class MySqlRepository<T> implements IRepository<T> {
         }
         
     }
+
+    @Override
+    public int Count() {
+        int result = 0;
+        
+        StringBuilder sqlBuilder = new StringBuilder();
+        sqlBuilder.append("SELECT COUNT(*) FROM ")
+            .append(modelClass.getAnnotation(Table.class).Name());
+        try {
+            ResultSet set = state.executeQuery(sqlBuilder.toString());            
+            result = set.getInt("COUNT(*)");
+        } catch (SQLException ex) {
+            Logger.getLogger(MySqlRepository.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return result;                  
+    }
 }
