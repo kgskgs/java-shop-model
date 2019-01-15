@@ -196,7 +196,7 @@ public class Dialogues {
      * @param text to save in the file
      * @param id of the model we are saving
      */
-    private static void showSaveDialogue(String name, String text, int id){
+    public static void showSaveDialogue(String name, String text, int id){
         JFileChooser fc = new JFileChooser();
         fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY); 
         fc.setDialogTitle("Save " + name);

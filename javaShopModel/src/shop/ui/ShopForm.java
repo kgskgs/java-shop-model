@@ -179,7 +179,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         //set up database connection vars
         queryStrQueue = new LinkedBlockingQueue<>();  
         
-        DBtimeFormat = DateTimeFormatter.ofPattern("YYYY-MM-dd HH:mm:ss");
+        DBtimeFormat = DateTimeFormatter.ofPattern("YYYY-MM-dd HH:mm:ss");;
         
         System.out.println("started");
     }
@@ -1859,7 +1859,8 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     }//GEN-LAST:event_chkRepInvActionPerformed
 
     private void mnuSaveLogActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSaveLogActionPerformed
-        //TODO add code
+        long timestamp = System.currentTimeMillis() / 1000L;
+        Dialogues.showSaveDialogue("log", txtLog.getText(), (int)timestamp);
     }//GEN-LAST:event_mnuSaveLogActionPerformed
 
     
