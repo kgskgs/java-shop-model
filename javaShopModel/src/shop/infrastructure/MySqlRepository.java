@@ -171,7 +171,7 @@ public class MySqlRepository<T> implements IRepository<T> {
             sqlStr = buildInsertString(model);
             sqlQueue.offer(sqlStr);     
         } catch (IllegalArgumentException | IllegalAccessException ex) {
-            ex.printStackTrace();
+            System.out.println(ex.getMessage()); //ex.printStackTrace();
         }
     }
     
@@ -218,7 +218,7 @@ public class MySqlRepository<T> implements IRepository<T> {
             sqlStr = buildInsertString(model);
             key = DBwriteThread.commitGetKey(sqlStr, state);
         } catch (IllegalArgumentException | IllegalAccessException ex) {
-            ex.printStackTrace();
+            System.out.println(ex.getMessage()); //ex.printStackTrace();
         } 
         return key;
     }
@@ -282,7 +282,7 @@ public class MySqlRepository<T> implements IRepository<T> {
             sqlQueue.offer(sqlBuilder.toString());
             
         } catch (IllegalArgumentException | IllegalAccessException ex) {
-            ex.printStackTrace();
+            System.out.println(ex.getMessage()); //ex.printStackTrace();
         }
         
     }

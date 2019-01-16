@@ -8,6 +8,9 @@ package shop.ui;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -18,10 +21,10 @@ import shop.models.Receipt;
 import shop.models.BoughtProduct;
 import java.util.ArrayList;
 import java.util.HashMap;
+import javax.swing.JFileChooser;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import shop.models.Client;
-import shop.models.Shop;
 
 /**
  *
@@ -89,13 +92,14 @@ public class Dialogues {
     }
     
     /**
-     * creates a text for receipt and displays it
+     * creates a text for receipt and displays it; prompts to save it on disk
      * @param headers strings to be centered at the top
      * @param bps bought products
      * @param prodNames map product keys to names
      * @param total total cost
+     * @param recpId id of the receipt
      */
-    public static void showReceipt(String[] headers, ArrayList<BoughtProduct> bps, HashMap<Integer, String> prodNames, double total){
+    public static void showReceipt(String[] headers, ArrayList<BoughtProduct> bps, HashMap<Integer, String> prodNames, double total, int recpId){
         //format text
         int targetWidth = 50;
         
@@ -133,11 +137,17 @@ public class Dialogues {
         sp.setPreferredSize(new Dimension(426,500));
         
         JOptionPane.showMessageDialog(null, sp, "Receipt", JOptionPane.INFORMATION_MESSAGE);
-//        Dimension dim = sp.getSize();
-//        System.out.println(dim.width);
-//        System.out.println(dim.height);
+        
+        showSaveDialogue("Receipt", text.toString(), recpId);
     }
     
+    /**
+     * creates a text for invoice and displays it; prompts to save it on disk
+     * @param headers strings to be centered at the top
+     * @param c client who requested the invoice
+     * @param r receipt associated with the invoice
+     * @param price total price of purchase
+     */
     public static void showInvoice(String[] headers, Client c, Receipt r, Double price){
         int targetWidth=75;
         
@@ -157,6 +167,8 @@ public class Dialogues {
         sp.setPreferredSize(new Dimension(426,500));
          
         JOptionPane.showMessageDialog(null, sp, "Invoice", JOptionPane.INFORMATION_MESSAGE);
+        
+        showSaveDialogue("Invoice", text.toString(), r.invoiceId);
     }
     
     public static void showReport(String[] headers, ArrayList<String> reportRes){
@@ -196,5 +208,27 @@ public class Dialogues {
         }
         
         text.append("\n");    
+    }
+    
+    /**
+     * shows a file chooser dialogue and save string to text file
+     * @param name name of the model we are saving
+     * @param text to save in the file
+     * @param id of the model we are saving
+     */
+    public static void showSaveDialogue(String name, String text, int id){
+        JFileChooser fc = new JFileChooser();
+        fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY); 
+        fc.setDialogTitle("Save " + name);
+        fc.showSaveDialog(null);
+ 
+        File targetDir = fc.getSelectedFile();
+        File recpF = new File(targetDir, name+"_"+id+".txt");
+        try (PrintWriter recpW = new PrintWriter(recpF)){
+            recpW.print(text);
+            System.out.println(name + " saved to " + targetDir.toString());
+        } catch (FileNotFoundException ex) {
+            System.out.println(ex.getMessage());
+        }
     }
 }
