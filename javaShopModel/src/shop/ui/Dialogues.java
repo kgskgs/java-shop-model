@@ -188,6 +188,8 @@ public class Dialogues {
         JScrollPane sp = new JScrollPane(ta);
         sp.setPreferredSize(new Dimension(426,500));
         JOptionPane.showMessageDialog(null, sp, "Report", JOptionPane.INFORMATION_MESSAGE);
+        long timestamp = System.currentTimeMillis() / 1000L;
+        showSaveDialogue("Report", text.toString(), (int)timestamp);
     }
     
     /**
