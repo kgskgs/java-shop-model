@@ -26,12 +26,10 @@ import shop.models.Receipt;
  */
 public class Report{
     private final Connection sqlConnection;
-    private final BlockingQueue<String> sqlQueue;
     
-    public Report(Connection sqlConnection, BlockingQueue<String> sqlQueue)
+    public Report(Connection sqlConnection)
     {
-        this.sqlConnection =   sqlConnection;
-        this.sqlQueue = sqlQueue;
+        this.sqlConnection =   sqlConnection;        
     }     
     
     public ArrayList<String> WriteReportReceipts(Employee employee, Date startDate, Date endDate) throws SQLException, ParseException
@@ -67,9 +65,7 @@ public class Report{
                     result.add(product.productName + " " + product.price);
                 }
             }            
-        }
-        
-        
+        }        
         return result;
     }
     
