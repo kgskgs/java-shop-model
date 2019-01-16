@@ -154,12 +154,28 @@ public class Dialogues {
         ta.setDisabledTextColor(Color.black);
 
         JScrollPane sp = new JScrollPane(ta);
+        sp.setPreferredSize(new Dimension(426,500));
          
         JOptionPane.showMessageDialog(null, sp, "Invoice", JOptionPane.INFORMATION_MESSAGE);
     }
     
-    public static void showReport(String[] headers, String text){
-    
+    public static void showReport(String[] headers, ArrayList<String> reportRes){
+        StringBuilder text = new StringBuilder();
+        int targetWidth=75;
+        
+        formatHeaders(text, headers, targetWidth);
+        
+        for (String s: reportRes){
+            text.append(s).append("\n");
+        }
+        
+        JTextArea ta = new JTextArea(text.toString());
+        ta.setEnabled(false);
+        ta.setDisabledTextColor(Color.black);
+
+        JScrollPane sp = new JScrollPane(ta);
+        sp.setPreferredSize(new Dimension(426,500));
+        JOptionPane.showMessageDialog(null, sp, "Report", JOptionPane.INFORMATION_MESSAGE);
     }
     
     /**

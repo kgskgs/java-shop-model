@@ -73,6 +73,9 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     private HashMap <Integer, Shop> shopsDict;
     private HashMap <Integer, String> prodNames;
     
+    //report
+    Report report;
+    
     //model entities
     //invoice
     private ArrayList<Client> clients;
@@ -217,6 +220,8 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
             boughtRepository = new MySqlRepository<>(BoughtProduct.class, DBconnection, queryStrQueue);
             
             usrRank = dbWrite.getUniqueInt("accessLvl", "employees", "username", usr);
+            
+            report = new Report(DBconnection);
             
             System.out.println("connected to database as " + usr + " with access level " + usrRank);
            
@@ -2372,18 +2377,20 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
 
     private void cmbRepShopActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbRepShopActionPerformed
         int selected = cmbRepShop.getSelectedIndex();
-        cmbRepEmp.removeAllItems();
-        cmbRepEmp.addItem("All");
-        if (selected == 0) {
-            for (Employee e : employees) {
-                cmbRepEmp.addItem(e.employeeId + " - " + e.firstname + " " + e.lastname);
-            }
-        } else {
-            selected -= 1;
-            int shopId = shops.get(selected).shopId;
-            for (Employee e : employees) {
-                if (e.shopId == shopId)
+            if (selected != -1){
+            cmbRepEmp.removeAllItems();
+            cmbRepEmp.addItem("All");
+            if (selected == 0) {
+                for (Employee e : employees) {
                     cmbRepEmp.addItem(e.employeeId + " - " + e.firstname + " " + e.lastname);
+                }
+            } else {
+                selected -= 1;
+                int shopId = shops.get(selected).shopId;
+                for (Employee e : employees) {
+                    if (e.shopId == shopId)
+                        cmbRepEmp.addItem(e.employeeId + " - " + e.firstname + " " + e.lastname);
+                }
             }
         }
     }//GEN-LAST:event_cmbRepShopActionPerformed
@@ -2397,6 +2404,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
             SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy");
             String[] headers = new String[4];
             headers[0] = "Report";
+            ArrayList<String> repResult;
             
             String txtFrom = txtRepFrom.getText();
             String txtTo = txtRepTo.getText();
@@ -2434,7 +2442,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
                     headers[2] = emp.firstname + " " + emp.lastname;
                     
                     debugString(headers);
-                    //call emp, receipt
+                    repResult = report.ReportShopEmployee(emp, from, to);
                 }
                 else if (selectedShop != 0){
                     Shop shop = shops.get(selectedShop-1);
@@ -2442,13 +2450,16 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
                     headers[2] = shop.shopName;
                     
                     debugString(headers);
-                    //call shop, receipt
+                    repResult = report.ReportShop(shop, from, to);
                 }
                 else {
                     headers[1] = "for total revenue";
                     headers[2] = " ";
                     debugString(headers);
+                    repResult = report.ReportAllShops(from, to);
                 }
+                
+                Dialogues.showReport(headers, repResult);
             }
             
         } catch (ParseException ex) {
