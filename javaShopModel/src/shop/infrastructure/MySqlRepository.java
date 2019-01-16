@@ -175,7 +175,7 @@ public class MySqlRepository<T> implements IRepository<T> {
         }
     }
     
-    public ArrayList<T> GetByForeignKey(Class<T1> fkClass, int id){
+    public<T1> ArrayList<T> GetByForeignKey(Class<T1> fkClass, int id) throws SQLException{
         
         StringBuilder sqlBuilder = new StringBuilder();
 
@@ -190,14 +190,23 @@ public class MySqlRepository<T> implements IRepository<T> {
         }
         
         sqlBuilder.append("Select * FROM ")
-                .append(fkClass.getAnnotation(Table.class).Name())
+                .append(modelClass.getAnnotation(Table.class).Name())
                 .append(" WHERE ")
                 .append(fKeyField.getName())
                 .append(" = '")
                 .append(id)
                 .append("'");
         
-        return null;
+        System.out.println(sqlBuilder.toString());
+        ResultSet set = state.executeQuery(sqlBuilder.toString());
+
+        ArrayList<T> resultList = new ArrayList<>();
+
+        while(set.next())
+        {
+            resultList.add(createFromCurrentLine(set));
+        }
+        return resultList;
     }
    
     @Override
