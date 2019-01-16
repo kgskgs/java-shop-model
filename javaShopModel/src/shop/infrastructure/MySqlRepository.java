@@ -26,14 +26,14 @@ import shop.db.DBwriteThread;
 public class MySqlRepository<T> implements IRepository<T> {
     
     protected Class<T> modelClass;
-    //private final Connection sqlConnection;
+    private final Connection sqlConnection;
     private final BlockingQueue<String> sqlQueue;
     
     private Statement state; //"By default, only one ResultSet object per Statement object can be open at the same time."
     
     public MySqlRepository(Class<T> modelClass, Connection sqlConnection, BlockingQueue<String> sqlQueue) throws SQLException{
         this.modelClass = modelClass;
-        //this.sqlConnection = sqlConnection;
+        this.sqlConnection = sqlConnection;
         this.sqlQueue = sqlQueue;
         
         state = sqlConnection.createStatement();
@@ -173,6 +173,40 @@ public class MySqlRepository<T> implements IRepository<T> {
         } catch (IllegalArgumentException | IllegalAccessException ex) {
             ex.printStackTrace();
         }
+    }
+    
+    public<T1> ArrayList<T> GetByForeignKey(Class<T1> fkClass, int id) throws SQLException{
+        
+        StringBuilder sqlBuilder = new StringBuilder();
+
+        Field fKeyField = null;
+        Field[] fkFields = fkClass.getFields();
+
+        for (Field f : fkFields ) {
+            if (f.isAnnotationPresent(Key.class)) {
+                fKeyField = f;
+                break;
+            }
+        }
+        
+        sqlBuilder.append("Select * FROM ")
+                .append(modelClass.getAnnotation(Table.class).Name())
+                .append(" WHERE ")
+                .append(fKeyField.getName())
+                .append(" = '")
+                .append(id)
+                .append("'");
+        
+        System.out.println(sqlBuilder.toString());
+        ResultSet set = state.executeQuery(sqlBuilder.toString());
+
+        ArrayList<T> resultList = new ArrayList<>();
+
+        while(set.next())
+        {
+            resultList.add(createFromCurrentLine(set));
+        }
+        return resultList;
     }
    
     @Override
