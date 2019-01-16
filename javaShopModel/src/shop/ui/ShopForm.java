@@ -7,8 +7,12 @@ package shop.ui;
 
 import java.awt.Component;
 import java.awt.event.ActionEvent;
+import java.io.PrintStream;
 import java.sql.Connection;
+import java.util.Date;
 import java.sql.SQLException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -16,6 +20,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.DefaultListModel;
 import javax.swing.DefaultListSelectionModel;
@@ -32,6 +38,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
+import shop.audit.Report;
 import shop.db.*;
 import shop.infrastructure.MySqlRepository;
 import shop.models.*;
@@ -58,6 +65,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     public static final int PNL_SHOPS = 0;
     public static final int PNL_PRODUCTS = 1;
     public static final int PNL_CHECKOUT = 2;
+    public static final int PNL_REPORTS = 3;
     
     private double chkTotal = 0.00;
     
@@ -65,6 +73,9 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     
     private HashMap <Integer, Shop> shopsDict;
     private HashMap <Integer, String> prodNames;
+    
+    //report
+    Report report;
     
     //model entities
     //invoice
@@ -171,14 +182,14 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         txtFilterProdName.getDocument().addDocumentListener(filterDocListener);
       
         //set up log textarea
-        //PrintStream os = new PrintStream(new LogDocStream(txtLog.getDocument()), true);
-        //System.setOut(os);
+        PrintStream os = new PrintStream(new LogDocStream(txtLog.getDocument()), true);
+        System.setOut(os);
         //System.setErr(os);
         
         //set up database connection vars
         queryStrQueue = new LinkedBlockingQueue<>();  
         
-        DBtimeFormat = DateTimeFormatter.ofPattern("YYYY-MM-dd HH:mm:ss");
+        DBtimeFormat = DateTimeFormatter.ofPattern("YYYY-MM-dd HH:mm:ss");;
         
         System.out.println("started");
     }
@@ -211,11 +222,13 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
             
             usrRank = dbWrite.getUniqueInt("accessLvl", "employees", "username", usr);
             
+            report = new Report(DBconnection);
+            
             System.out.println("connected to database as " + usr + " with access level " + usrRank);
            
             return true;
         } catch (ClassNotFoundException | SQLException ex) {
-            ex.printStackTrace();
+            System.out.println(ex.getMessage()); //ex.printStackTrace();
             return false;
         }
     }
@@ -236,7 +249,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
             try {
                 dbWrite.join();
             } catch (InterruptedException ex) {
-                ex.printStackTrace();
+                System.out.println(ex.getMessage()); //ex.printStackTrace();
             }
         }
     }
@@ -244,7 +257,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     //ENTITY OPERATIONS
     public void pnlShopsEnter(){
         try {
-            System.out.println(txtUser.getText());
+            //System.out.println(txtUser.getText());
             
             lstShopsM.addElement("New Shop");
         
@@ -270,7 +283,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
             lstShops.setSelectedIndex(0);
             
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            System.out.println(ex.getMessage()); //ex.printStackTrace();
         } 
     }
     
@@ -311,7 +324,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
             lstCats.setSelectedIndex(0);
             
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            System.out.println(ex.getMessage()); //ex.printStackTrace();
         }
     }
     
@@ -370,7 +383,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
             }  
             
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            System.out.println(ex.getMessage()); //ex.printStackTrace();
         }
     }
     
@@ -396,6 +409,27 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         
         //we'll be reloading these try to free memory while not in use
         clients.clear();
+    }
+    
+    
+    private void pnlReportsEnter() {
+        try {
+            shops = shopRepository.GetAll(0, 1000, false);
+            employees = empRepository.GetAll(0, 1000, false);
+            cmbRepShop.addItem("All");
+            for(Shop shop : shops){
+                cmbRepShop.addItem(shop.shopId + " - " + shop.shopName);
+            }
+            
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        
+    }
+    
+    private void pnlReportsExit() {
+        cmbRepShop.removeAllItems();
+        cmbRepEmp.removeAllItems();
     }
     
     /**
@@ -702,8 +736,6 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         txtRepFrom = new javax.swing.JTextField();
         jLabel23 = new javax.swing.JLabel();
         txtRepTo = new javax.swing.JTextField();
-        chkRepInv = new javax.swing.JCheckBox();
-        txtRepEIK = new javax.swing.JTextField();
         bntRepGet = new javax.swing.JButton();
         jLabel24 = new javax.swing.JLabel();
         pnlLogin = new javax.swing.JPanel();
@@ -1486,9 +1518,9 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
             pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(pnlCheckoutLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(pnlChkFilters, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(tblSP, javax.swing.GroupLayout.PREFERRED_SIZE, 378, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(pnlChkFilters, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(tblSP, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
                 .addGroup(pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(pnlCheckoutLayout.createSequentialGroup()
                         .addGroup(pnlCheckoutLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1543,11 +1575,13 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
 
         jLabel20.setText("From shop");
 
-        cmbRepShop.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        cmbRepShop.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbRepShopActionPerformed(evt);
+            }
+        });
 
         jLabel21.setText("Created by");
-
-        cmbRepEmp.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
 
         jLabel22.setText("From date:");
 
@@ -1557,19 +1591,13 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
 
         txtRepTo.setHorizontalAlignment(javax.swing.JTextField.CENTER);
 
-        chkRepInv.setText("has Invoice with EIK:");
-        chkRepInv.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                chkRepInvActionPerformed(evt);
-            }
-        });
-
-        txtRepEIK.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-        txtRepEIK.setText("*");
-        txtRepEIK.setEnabled(false);
-
         bntRepGet.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
         bntRepGet.setText("Generate");
+        bntRepGet.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                bntRepGetActionPerformed(evt);
+            }
+        });
 
         jLabel24.setText("Get information for all reciepts that are:");
 
@@ -1582,10 +1610,6 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
                     .addGroup(pnlReportsLayout.createSequentialGroup()
                         .addGap(147, 147, 147)
                         .addGroup(pnlReportsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(pnlReportsLayout.createSequentialGroup()
-                                .addComponent(chkRepInv)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(txtRepEIK, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(pnlReportsLayout.createSequentialGroup()
                                 .addComponent(jLabel22)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -1605,8 +1629,8 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
                             .addComponent(jLabel24)))
                     .addGroup(pnlReportsLayout.createSequentialGroup()
                         .addGap(215, 215, 215)
-                        .addComponent(bntRepGet, javax.swing.GroupLayout.PREFERRED_SIZE, 115, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(154, Short.MAX_VALUE))
+                        .addComponent(bntRepGet, javax.swing.GroupLayout.PREFERRED_SIZE, 148, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(206, Short.MAX_VALUE))
         );
         pnlReportsLayout.setVerticalGroup(
             pnlReportsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1627,11 +1651,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
                     .addComponent(txtRepFrom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel23)
                     .addComponent(txtRepTo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
-                .addGroup(pnlReportsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(chkRepInv)
-                    .addComponent(txtRepEIK, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(45, 45, 45)
                 .addComponent(bntRepGet, javax.swing.GroupLayout.PREFERRED_SIZE, 57, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(182, Short.MAX_VALUE))
         );
@@ -1853,12 +1873,9 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         cmbInvCname.setSelectedIndex(0);
     }//GEN-LAST:event_chkInvoiceActionPerformed
 
-    private void chkRepInvActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkRepInvActionPerformed
-        txtRepEIK.setEnabled(chkRepInv.isSelected());
-    }//GEN-LAST:event_chkRepInvActionPerformed
-
     private void mnuSaveLogActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSaveLogActionPerformed
-        //TODO add code
+        long timestamp = System.currentTimeMillis() / 1000L;
+        Dialogues.showSaveDialogue("log", txtLog.getText(), (int)timestamp);
     }//GEN-LAST:event_mnuSaveLogActionPerformed
 
     
@@ -1920,14 +1937,19 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
      */
     private void calcPrice(TableCellListener tcl){
         int newV = (int) tcl.getNewValue();
-        int oldV = (int) tcl.getOldValue();
-        if (newV >= 0){
-            double price = (double) tblChkM.getValueAt(tcl.getRow(), tcl.getColumn()+1);
-            chkTotal += (newV - oldV) * price;
-            lblChkTotal.setText(String.format("%.2f", chkTotal));
-        } else {
-            tblChkM.setValueAt(oldV, tcl.getRow(), tcl.getColumn());
-            System.out.println("Negative value entered for # products bought.. reseting");
+        try{
+            int oldV = (int) tcl.getOldValue();
+            if (newV >= 0){
+                double price = (double) tblChkM.getValueAt(tcl.getRow(), tcl.getColumn()+1);
+                chkTotal += (newV - oldV) * price;
+                lblChkTotal.setText(String.format("%.2f", chkTotal));
+            } else {
+                tblChkM.setValueAt(oldV, tcl.getRow(), tcl.getColumn());
+                System.out.println("Negative value entered for # products bought.. reseting");
+            }
+        } catch (java.lang.NullPointerException ex){
+            System.out.print("Old value of cell blank, reseting to 0");
+            tblChkM.setValueAt(0, tcl.getRow(), tcl.getColumn());
         }
     }
     
@@ -1942,6 +1964,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
                case PNL_SHOPS: pnlShopsExit(); break;
                case PNL_PRODUCTS: pnlProductsExit(); break;
                case PNL_CHECKOUT: pnlCheckoutExit(); break;
+               case PNL_REPORTS: pnlReportsExit(); break;
            }
            
            //entering panel
@@ -1950,6 +1973,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
                case PNL_SHOPS: pnlShopsEnter(); break;
                case PNL_PRODUCTS: pnlProductsEnter(); break;
                case PNL_CHECKOUT: pnlCheckoutEnter(); break;
+               case PNL_REPORTS: pnlReportsEnter(); break;
            }
         }
     }//GEN-LAST:event_tbtMainStateChanged
@@ -1965,99 +1989,108 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
 
     private void btnCheckDoneActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnCheckDoneActionPerformed
         if(chkTotal > 0){
-            String timestamp = LocalDateTime.now().format(DBtimeFormat);
-            //Integer invId = null;
-            Client tmpClient = null;
-            Invoice inv = null;
-              
-            //invoice checked
-            if (chkInvoice.isSelected()){
-                //clients
-                int selected =  cmbInvCname.getSelectedIndex();
+            try{
+                //below script ensures only integers have been entered in the table
+                int checkValid;
+                for (int i = 0; i < tblChkM.getRowCount(); i++)
+                    checkValid = (int) tblChkM.getValueAt(i, 4);
                 
+                String timestamp = LocalDateTime.now().format(DBtimeFormat);
+                //Integer invId = null;
+                Client tmpClient = null;
+                Invoice inv = null;
 
-                if (selected == 0){ //add new client
-                    int newClientKey;
+                //invoice checked
+                if (chkInvoice.isSelected()){
+                    //clients
+                    int selected =  cmbInvCname.getSelectedIndex();
 
-                    tmpClient = new Client(txtInvEIK.getText(), 
-                            txtInvFname.getText(), 
-                            txtInvLname.getText(), 
-                            txtInvCname.getText());
 
-                    //tmpClient.setNewInstance(true); - inserting immediately
-                    clients.add(tmpClient);
+                    if (selected == 0){ //add new client
+                        int newClientKey;
 
-                    newClientKey = clientRepository.InsertGetKey(tmpClient);
-                    tmpClient.clientId = newClientKey;
+                        tmpClient = new Client(txtInvEIK.getText(), 
+                                txtInvFname.getText(), 
+                                txtInvLname.getText(), 
+                                txtInvCname.getText());
 
-                    cmbInvCname.addItem(newClientKey + ": " + tmpClient.companyName +" - "+ tmpClient.firstname);
-                } else { //update existing client
-                    tmpClient = clients.get(selected - 1); //-1 since first item is 'new'
-                    tmpClient.eik = txtInvEIK.getText();
-                    tmpClient.firstname = txtInvFname.getText();
-                    tmpClient.lastname = txtInvLname.getText();
-                    tmpClient.companyName = txtInvCname.getText();
-                    tmpClient.setUpdated(true);
+                        //tmpClient.setNewInstance(true); - inserting immediately
+                        clients.add(tmpClient);
+
+                        newClientKey = clientRepository.InsertGetKey(tmpClient);
+                        tmpClient.clientId = newClientKey;
+
+                        cmbInvCname.addItem(newClientKey + ": " + tmpClient.companyName +" - "+ tmpClient.firstname);
+                    } else { //update existing client
+                        tmpClient = clients.get(selected - 1); //-1 since first item is 'new'
+                        tmpClient.eik = txtInvEIK.getText();
+                        tmpClient.firstname = txtInvFname.getText();
+                        tmpClient.lastname = txtInvLname.getText();
+                        tmpClient.companyName = txtInvCname.getText();
+                        tmpClient.setUpdated(true);
+                    }
+                    //invoice
+                    inv = new Invoice(tmpClient.clientId, timestamp);
+                    inv.invoiceId = invoiceRepository.InsertGetKey(inv);
                 }
-                //invoice
-                inv = new Invoice(tmpClient.clientId, timestamp);
-                inv.invoiceId = invoiceRepository.InsertGetKey(inv);
-            }
-            
-            //receipt
-            ArrayList<BoughtProduct> boughtProds = new ArrayList<>();
-            int tmpBoughtN;
-            BoughtProduct tmpBoughtProd;
-            Integer invId = (inv == null)? null : inv.invoiceId;
-            
-            Receipt recp = new Receipt( (chkInvoice.isSelected())? 1 : 0,
-                                        invId,
-                                        me.employeeId,
-                                        timestamp);
-            recp.receiptId = receiptRepository.InsertGetKey(recp);
-            
-            
-            for (int i = 0; i < tblChkM.getRowCount(); i++){
-                tmpBoughtN = (int) tblChkM.getValueAt(i, 4);
-                //System.out.println(i + " " + tmpBoughtN);
-                if (tmpBoughtN > 0){
-                    
-                    tmpBoughtProd = new BoughtProduct((int)tblChkM.getValueAt(i, 2),
-                                                        recp.receiptId,
-                                                        tmpBoughtN,
-                                                        (double)tblChkM.getValueAt(i, 5));
-                    boughtRepository.Insert(tmpBoughtProd);
-                    boughtProds.add(tmpBoughtProd);
+
+                //receipt
+                ArrayList<BoughtProduct> boughtProds = new ArrayList<>();
+                int tmpBoughtN;
+                BoughtProduct tmpBoughtProd;
+                Integer invId = (inv == null)? null : inv.invoiceId;
+
+                Receipt recp = new Receipt( (chkInvoice.isSelected())? 1 : 0,
+                                            invId,
+                                            me.employeeId,
+                                            timestamp);
+                recp.receiptId = receiptRepository.InsertGetKey(recp);
+
+
+                for (int i = 0; i < tblChkM.getRowCount(); i++){
+                    tmpBoughtN = (int) tblChkM.getValueAt(i, 4);
+                    //System.out.println(i + " " + tmpBoughtN);
+                    if (tmpBoughtN > 0){
+
+                        tmpBoughtProd = new BoughtProduct((int)tblChkM.getValueAt(i, 2),
+                                                            recp.receiptId,
+                                                            tmpBoughtN,
+                                                            (double)tblChkM.getValueAt(i, 5));
+                        boughtRepository.Insert(tmpBoughtProd);
+                        boughtProds.add(tmpBoughtProd);
+                    }
                 }
+                Shop s = shopsDict.get(me.shopId);
+                String recptH = "Receipt #" + recp.receiptId;
+                String empH = "Agent " + me.firstname +" "+  me.lastname;
+                String empH2 = "Employee " + me.employeeId;
+                Dialogues.showReceipt(new String[] {recptH,
+                                                s.shopName, 
+                                                s.address, 
+                                                recp.buyDate,
+                                                empH,
+                                                empH2}, 
+                                    boughtProds,
+                                    prodNames,
+                                    chkTotal,
+                                    recp.receiptId);
+
+                //resest UI
+                if (chkInvoice.isSelected()){
+                    //show invoice
+                    String invH = "Invoice #"+recp.invoiceId;
+                    String invHr = "For receipt #"+recp.receiptId;
+                    Dialogues.showInvoice(new String[] {s.shopName,invH,invHr}, tmpClient, recp, chkTotal);
+
+                    chkInvoice.doClick();
+                    clearTxts(pnlInvoice);
+                }
+                btnChkClear.doClick();
+                btnClearCatF.doClick();
+                btnClearProdF.doClick();
+            } catch (java.lang.NullPointerException ex){
+                System.out.println("Invalid value(s) in table");
             }
-            Shop s = shopsDict.get(me.shopId);
-            String recptH = "Receipt #" + recp.receiptId;
-            String empH = "Agent " + me.firstname +" "+  me.lastname;
-            String empH2 = "Employee " + me.employeeId;
-            Dialogues.showReceipt(new String[] {recptH,
-                                            s.shopName, 
-                                            s.address, 
-                                            recp.buyDate,
-                                            empH,
-                                            empH2}, 
-                                boughtProds,
-                                prodNames,
-                                chkTotal);
-            
-            //resest UI
-            if (chkInvoice.isSelected()){
-                //show invoice
-                String invH = "Invoice #"+recp.invoiceId;
-                String invHr = "For receipt #"+recp.receiptId;
-                Dialogues.showInvoice(new String[] {s.shopName,invH,invHr}, tmpClient, recp, chkTotal);
-                
-                chkInvoice.doClick();
-                clearTxts(pnlInvoice);
-            }
-            btnChkClear.doClick();
-            btnClearCatF.doClick();
-            btnClearProdF.doClick();
-            
         } else {
             System.out.println("Nothing bought");
         }
@@ -2277,7 +2310,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     private void btnEmpNewActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEmpNewActionPerformed
         String pwd = Dialogues.passwordNew();
         if (pwd != null){
-            int shopId = shops.get(lstShops.getSelectedIndex()-1).shopId;
+            int shopId = shops.get(cmbEmpShop.getSelectedIndex()).shopId;
             Employee e = new Employee(txtEmpUsr.getText(), 
                                 txtEmpName1.getText(),
                                 txtEmpName2.getText(),
@@ -2358,7 +2391,104 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         Dialogues.showEmpInfo(me);
     }//GEN-LAST:event_mnuUinfoActionPerformed
 
+    private void cmbRepShopActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbRepShopActionPerformed
+        int selected = cmbRepShop.getSelectedIndex();
+            if (selected != -1){
+            cmbRepEmp.removeAllItems();
+            cmbRepEmp.addItem("All");
+            if (selected == 0) {
+                for (Employee e : employees) {
+                    cmbRepEmp.addItem(e.employeeId + " - " + e.firstname + " " + e.lastname);
+                }
+            } else {
+                selected -= 1;
+                int shopId = shops.get(selected).shopId;
+                for (Employee e : employees) {
+                    if (e.shopId == shopId)
+                        cmbRepEmp.addItem(e.employeeId + " - " + e.firstname + " " + e.lastname);
+                }
+            }
+        }
+    }//GEN-LAST:event_cmbRepShopActionPerformed
+
     
+    
+    private void bntRepGetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bntRepGetActionPerformed
+        try {
+            Date from = null;
+            Date to = null;
+            SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy");
+            String[] headers = new String[4];
+            headers[0] = "Report";
+            ArrayList<String> repResult;
+            
+            String txtFrom = txtRepFrom.getText();
+            String txtTo = txtRepTo.getText();
+            
+            if (txtFrom.equals("*"))
+                from = format.parse("01/01/1900");
+            else
+                from = format.parse(txtFrom);
+            if (txtTo.equals("*"))
+                to = format.parse("01/01/2100");
+            else
+                to = format.parse(txtTo);
+            
+            headers[3] = "from " + txtFrom + " to " + txtTo;
+            
+            if (to.before(from)){
+                System.out.println("'from' date must be 'before' to date");
+            } else {
+                int selectedEmp = cmbRepEmp.getSelectedIndex();
+                int selectedShop = cmbRepShop.getSelectedIndex();
+                if (selectedEmp != 0){
+                    Employee emp = null;
+                    //get sleceted employee id - first number in combobox items
+                    int empId = Integer.valueOf(
+                            String.valueOf(cmbRepEmp.getSelectedItem())
+                            .split("\\s+")[0]);
+                    
+                    for(Employee tmpEmp: employees){
+                        if(tmpEmp.employeeId == empId){
+                            emp = tmpEmp;
+                            break;
+                        }
+                    }
+                    headers[1] = "for receipts created by employee #" + emp.employeeId;
+                    headers[2] = emp.firstname + " " + emp.lastname;
+                    
+                    debugString(headers);
+                    repResult = report.ReportShopEmployee(emp, from, to);
+                }
+                else if (selectedShop != 0){
+                    Shop shop = shops.get(selectedShop-1);
+                    headers[1] = "for receipts created in shop #" + shop.shopId;
+                    headers[2] = shop.shopName;
+                    
+                    debugString(headers);
+                    repResult = report.ReportShop(shop, from, to);
+                }
+                else {
+                    headers[1] = "for total revenue";
+                    headers[2] = " ";
+                    debugString(headers);
+                    repResult = report.ReportAllShops(from, to);
+                }
+                
+                Dialogues.showReport(headers, repResult);
+            }
+            
+        } catch (ParseException ex) {
+            System.out.println("Invalide date eneterd. Please use the format 'dd/MM/yyyy'. To select all dates enter *");
+        }
+ 
+    }//GEN-LAST:event_bntRepGetActionPerformed
+
+    private void debugString(String[] str){
+        for (String s: str){
+            System.err.println(s);
+        }
+    }
     
     //<editor-fold defaultstate="collapsed" desc="autogenreated variables">
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -2381,7 +2511,6 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     private javax.swing.JButton btnShopNew;
     private javax.swing.JButton btnShopUpdate;
     private javax.swing.JCheckBox chkInvoice;
-    private javax.swing.JCheckBox chkRepInv;
     private javax.swing.JComboBox<String> cmbEmpRank;
     private javax.swing.JComboBox<String> cmbEmpShop;
     private javax.swing.JComboBox<String> cmbInvCname;
@@ -2481,7 +2610,6 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     private javax.swing.JTextField txtProdId;
     private javax.swing.JTextField txtProdName;
     private javax.swing.JTextField txtProdPrice;
-    private javax.swing.JTextField txtRepEIK;
     private javax.swing.JTextField txtRepFrom;
     private javax.swing.JTextField txtRepTo;
     private javax.swing.JTextField txtShopAdress;
@@ -2489,5 +2617,9 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     private javax.swing.JTextField txtShopName;
     private javax.swing.JTextField txtUser;
     // End of variables declaration//GEN-END:variables
+
+
     //</editor-fold>
+
+
 }

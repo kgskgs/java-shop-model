@@ -19,4 +19,5 @@ public interface IRepository<T> {
     public int InsertGetKey(T model) throws SQLException;
     public void Update(T model);
     public void Delete(int id);
+    //public int Count();
 }

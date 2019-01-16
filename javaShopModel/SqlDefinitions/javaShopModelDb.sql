@@ -3,11 +3,10 @@ DROP DATABASE IF EXISTS javashopmodeldb;
 CREATE DATABASE javashopmodeldb;
 use javashopmodeldb;
 
-CREATE ROLE IF NOT EXISTS "shop_cashier", "shop_manager";
 
-GRANT INSERT, SELECT, UPDATE ON javashopmodeldb.* TO shop_cashier;
-GRANT CREATE USER, GRANT OPTION, ROLE_ADMIN ON *.* TO shop_manager;
-SET GLOBAL activate_all_roles_on_login = 1;
+#GRANT INSERT, SELECT, UPDATE ON javashopmodeldb.* TO shop_cashier;
+#GRANT CREATE USER, GRANT OPTION ON *.* TO shop_manager;
+#SET GLOBAL activate_all_roles_on_login = 1;
 
 CREATE TABLE clients
 (

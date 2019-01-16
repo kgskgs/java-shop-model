@@ -28,6 +28,8 @@ public class DBwriteThread extends Thread {
     
     private final BlockingQueue<String> queryStrQueue;
     
+    public static final String[] PRIVILEGES = {"INSERT, SELECT, UPDATE ON javashopmodeldb.*", "CREATE USER, GRANT OPTION ON *.*"};
+    
     public DBwriteThread(Connection con, BlockingQueue<String> q) throws SQLException{
         this.queryC = 0;
         
@@ -54,7 +56,7 @@ public class DBwriteThread extends Thread {
                             queryC++;
                         }
 
-                        if(queryC >= BATCH_EXEC_SIZE || "fc".equals(tmpQueryStr)){ 
+                        if(queryC >= BATCH_EXEC_SIZE || ("fc".equals(tmpQueryStr) && queryC>0)){ 
                             state.executeBatch();
                             reportCommit();
                             queryC = 0;
@@ -62,11 +64,11 @@ public class DBwriteThread extends Thread {
                 } 
                 catch (SQLException ex) {
                     System.err.println(ex.getSQLState());
-                    ex.printStackTrace();
+                    System.out.println(ex.getMessage()); //ex.printStackTrace();
                 }
             }
         } catch (InterruptedException ex) {
-                ex.printStackTrace();
+                System.out.println(ex.getMessage()); //ex.printStackTrace();
         } 
     }
     
@@ -97,7 +99,7 @@ public class DBwriteThread extends Thread {
             
             
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            System.out.println(ex.getMessage()); //ex.printStackTrace();
         }
         
         return key;
@@ -119,7 +121,7 @@ public class DBwriteThread extends Thread {
             rs.next();
             return rs.getInt(1); //result sets are 1-indexed
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            System.out.println(ex.getMessage()); //ex.printStackTrace();
             return -1;
         }
         
@@ -151,8 +153,7 @@ public class DBwriteThread extends Thread {
     public static String getGrantStr(String usr, int rank){
         if (rank != 0 && rank != 1)
             throw new java.lang.IllegalArgumentException("rank value must be 0 or 1");
-        String role = (rank == 0)? "shop_cashier" : "shop_manager"; 
-        return String.format("GRANT '%s' TO '%s'@'localhost'", role, usr);
+        return String.format("GRANT %s TO '%s'@'localhost'", PRIVILEGES[rank], usr);
     }
     
     /**
@@ -173,8 +174,7 @@ public class DBwriteThread extends Thread {
     public static String getRevokeStr(String usr, int rank){
         if (rank != 0 && rank != 1)
             throw new java.lang.IllegalArgumentException("rank value must be 0 or 1");
-        String role = (rank == 0)? "shop_cashier" : "shop_manager"; 
-        return String.format("REVOKE '%s' FROM '%s'@'localhost'", role, usr);
+        return String.format("REVOKE %s FROM '%s'@'localhost'", PRIVILEGES[rank], usr);
     }
     
     /**
@@ -186,5 +186,5 @@ public class DBwriteThread extends Thread {
     public static String getSetPasswordStr(String usr, String pass){
         return String.format("SET PASSWORD FOR '%s'@'localhost' = '%s'", usr, pass);
     }
-    
+
 }
