@@ -44,7 +44,7 @@ public class Report{
         ArrayList<Receipt> thisEmployeeReceipts = new ArrayList<>();
         
         DateFormat format;
-        format = new SimpleDateFormat("MMMM d, yyyy", Locale.ENGLISH);
+        format = new SimpleDateFormat("YYYY-MM-dd HH:mm:ss", Locale.ENGLISH);
         
         for (Receipt receipt : receipts){
             Date receiptDate = (Date) format.parse(receipt.buyDate);

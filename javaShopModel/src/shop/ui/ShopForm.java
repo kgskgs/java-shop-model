@@ -16,6 +16,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.DefaultListModel;
 import javax.swing.DefaultListSelectionModel;
@@ -58,6 +60,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     public static final int PNL_SHOPS = 0;
     public static final int PNL_PRODUCTS = 1;
     public static final int PNL_CHECKOUT = 2;
+    public static final int PNL_REPORTS = 3;
     
     private double chkTotal = 0.00;
     
@@ -1543,7 +1546,11 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
 
         jLabel20.setText("From shop");
 
-        cmbRepShop.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        cmbRepShop.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cmbRepShopActionPerformed(evt);
+            }
+        });
 
         jLabel21.setText("Created by");
 
@@ -1942,6 +1949,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
                case PNL_SHOPS: pnlShopsExit(); break;
                case PNL_PRODUCTS: pnlProductsExit(); break;
                case PNL_CHECKOUT: pnlCheckoutExit(); break;
+               case PNL_REPORTS: pnlReportsExit(); break;
            }
            
            //entering panel
@@ -1950,6 +1958,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
                case PNL_SHOPS: pnlShopsEnter(); break;
                case PNL_PRODUCTS: pnlProductsEnter(); break;
                case PNL_CHECKOUT: pnlCheckoutEnter(); break;
+               case PNL_REPORTS: pnlReportsEnter(); break;
            }
         }
     }//GEN-LAST:event_tbtMainStateChanged
@@ -2358,6 +2367,11 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         Dialogues.showEmpInfo(me);
     }//GEN-LAST:event_mnuUinfoActionPerformed
 
+    private void cmbRepShopActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbRepShopActionPerformed
+        cmbRepEmp.addItem("All");
+
+    }//GEN-LAST:event_cmbRepShopActionPerformed
+
     
     
     //<editor-fold defaultstate="collapsed" desc="autogenreated variables">
@@ -2489,5 +2503,23 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     private javax.swing.JTextField txtShopName;
     private javax.swing.JTextField txtUser;
     // End of variables declaration//GEN-END:variables
+
+    private void pnlReportsExit() {
+    }
     //</editor-fold>
+
+    private void pnlReportsEnter() {
+        try {
+            shops = shopRepository.GetAll(0, 1000, false);
+            employees = empRepository.GetAll(0, 1000, false);
+            cmbRepShop.addItem("All");
+            for(Shop shop : shops){
+                cmbRepShop.addItem(shop.shopName);
+            }
+            
+        } catch (SQLException ex) {
+            Logger.getLogger(ShopForm.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+    }
 }
