@@ -6,7 +6,7 @@
 package shop.audit;
 
 import java.sql.Connection;
-import java.sql.Date;
+import java.util.Date;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -40,7 +40,7 @@ public class Report{
         
         MySqlRepository<Receipt> receiptRepo = new MySqlRepository<>(Receipt.class,sqlConnection,null);
         
-        ArrayList<Receipt> receipts = receiptRepo.GetAll(0, receiptRepo.Count(), true);
+        ArrayList<Receipt> receipts = receiptRepo.GetAll(0, 1000, false);
         ArrayList<Receipt> thisEmployeeReceipts = new ArrayList<>();
         
         DateFormat format;
@@ -48,7 +48,8 @@ public class Report{
         
         for (Receipt receipt : receipts){
             Date receiptDate = (Date) format.parse(receipt.buyDate);
-            if (receipt.employeeId == employee.employeeId && receiptDate.before(endDate) && receiptDate.after(startDate)) {
+            //&& receiptDate.before(endDate) && receiptDate.after(startDate)
+            if (receipt.employeeId == employee.employeeId ) {
                 thisEmployeeReceipts.add(receipt);
             }
         }
@@ -56,7 +57,7 @@ public class Report{
         MySqlRepository<BoughtProduct> boughtProductsRepo = new MySqlRepository<>(BoughtProduct.class,sqlConnection,null); 
         MySqlRepository<Product> productsRepo = new MySqlRepository<>(Product.class,sqlConnection,null); 
         
-        ArrayList<BoughtProduct> boughtProducts = boughtProductsRepo.GetAll(0, boughtProductsRepo.Count(), true);
+        ArrayList<BoughtProduct> boughtProducts = boughtProductsRepo.GetAll(0, 1000, false);
        
         
         for (Receipt receipt : thisEmployeeReceipts){

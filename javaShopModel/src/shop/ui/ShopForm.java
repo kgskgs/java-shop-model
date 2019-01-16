@@ -8,7 +8,9 @@ package shop.ui;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.sql.Connection;
+import java.util.Date;
 import java.sql.SQLException;
+import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -34,6 +36,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
+import shop.audit.Report;
 import shop.db.*;
 import shop.infrastructure.MySqlRepository;
 import shop.models.*;
@@ -399,6 +402,22 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         
         //we'll be reloading these try to free memory while not in use
         clients.clear();
+    }
+    
+    
+    private void pnlReportsEnter() {
+        try {
+            shops = shopRepository.GetAll(0, 1000, false);
+            employees = empRepository.GetAll(0, 1000, false);
+            cmbRepShop.addItem("All");
+            for(Shop shop : shops){
+                cmbRepShop.addItem(shop.shopName);
+            }
+            
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+        
     }
     
     /**
@@ -1577,6 +1596,11 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
 
         bntRepGet.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
         bntRepGet.setText("Generate");
+        bntRepGet.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                bntRepGetActionPerformed(evt);
+            }
+        });
 
         jLabel24.setText("Get information for all reciepts that are:");
 
@@ -1612,8 +1636,8 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
                             .addComponent(jLabel24)))
                     .addGroup(pnlReportsLayout.createSequentialGroup()
                         .addGap(215, 215, 215)
-                        .addComponent(bntRepGet, javax.swing.GroupLayout.PREFERRED_SIZE, 115, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(154, Short.MAX_VALUE))
+                        .addComponent(bntRepGet, javax.swing.GroupLayout.PREFERRED_SIZE, 148, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(206, Short.MAX_VALUE))
         );
         pnlReportsLayout.setVerticalGroup(
             pnlReportsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -2368,9 +2392,26 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     }//GEN-LAST:event_mnuUinfoActionPerformed
 
     private void cmbRepShopActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbRepShopActionPerformed
+        int selected = cmbRepShop.getSelectedIndex();
         cmbRepEmp.addItem("All");
 
     }//GEN-LAST:event_cmbRepShopActionPerformed
+
+    private void bntRepGetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bntRepGetActionPerformed
+        try {
+            Report rep = new Report(DBconnection, null);
+            ArrayList <String> res;
+            res = rep.WriteReportReceipts(me, new Date(1999,0, 0),new Date(2200,0, 0));
+            
+            for (String s: res){
+                System.out.println(res);
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        } catch (ParseException ex) {
+            ex.printStackTrace();
+        }
+    }//GEN-LAST:event_bntRepGetActionPerformed
 
     
     
@@ -2508,18 +2549,5 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     }
     //</editor-fold>
 
-    private void pnlReportsEnter() {
-        try {
-            shops = shopRepository.GetAll(0, 1000, false);
-            employees = empRepository.GetAll(0, 1000, false);
-            cmbRepShop.addItem("All");
-            for(Shop shop : shops){
-                cmbRepShop.addItem(shop.shopName);
-            }
-            
-        } catch (SQLException ex) {
-            Logger.getLogger(ShopForm.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        
-    }
+
 }

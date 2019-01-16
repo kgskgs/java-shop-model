@@ -116,15 +116,16 @@ public class MySqlRepository<T> implements IRepository<T> {
             return null;
         }
 
-        sqlBuilder.append("Select FROM ")
+        sqlBuilder.append("Select * FROM ")
                 .append(modelClass.getAnnotation(Table.class).Name())
                 .append(" WHERE ")
                 .append(keyField.getName())
                 .append(" = '")
-                .append(id);
+                .append(id)
+                .append("'");
 
         //System.out.println(sqlBuilder.toString());
-
+        System.out.println(sqlBuilder.toString());
         ResultSet set = state.executeQuery(sqlBuilder.toString());
 
         set.next();
@@ -252,19 +253,19 @@ public class MySqlRepository<T> implements IRepository<T> {
         
     }
 
-    @Override
-    public int Count() {
-        int result = 0;
-        
-        StringBuilder sqlBuilder = new StringBuilder();
-        sqlBuilder.append("SELECT COUNT(*) FROM ")
-            .append(modelClass.getAnnotation(Table.class).Name());
-        try {
-            ResultSet set = state.executeQuery(sqlBuilder.toString());            
-            result = set.getInt("COUNT(*)");
-        } catch (SQLException ex) {
-            Logger.getLogger(MySqlRepository.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return result;                  
-    }
+//    @Override
+//    public int Count() {
+//        int result = 0;
+//        
+//        StringBuilder sqlBuilder = new StringBuilder();
+//        sqlBuilder.append("SELECT COUNT(*) FROM ")
+//            .append(modelClass.getAnnotation(Table.class).Name());
+//        try {
+//            ResultSet set = state.executeQuery(sqlBuilder.toString());            
+//            result = set.getInt("COUNT(*)");
+//        } catch (SQLException ex) {
+//            Logger.getLogger(MySqlRepository.class.getName()).log(Level.SEVERE, null, ex);
+//        }
+//        return result;                  
+//    }
 }
