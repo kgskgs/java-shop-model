@@ -11,6 +11,7 @@ import java.sql.Connection;
 import java.util.Date;
 import java.sql.SQLException;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -411,13 +412,18 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
             employees = empRepository.GetAll(0, 1000, false);
             cmbRepShop.addItem("All");
             for(Shop shop : shops){
-                cmbRepShop.addItem(shop.shopName);
+                cmbRepShop.addItem(shop.shopId + " - " + shop.shopName);
             }
             
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
         
+    }
+    
+    private void pnlReportsExit() {
+        cmbRepShop.removeAllItems();
+        cmbRepEmp.removeAllItems();
     }
     
     /**
@@ -724,8 +730,6 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         txtRepFrom = new javax.swing.JTextField();
         jLabel23 = new javax.swing.JLabel();
         txtRepTo = new javax.swing.JTextField();
-        chkRepInv = new javax.swing.JCheckBox();
-        txtRepEIK = new javax.swing.JTextField();
         bntRepGet = new javax.swing.JButton();
         jLabel24 = new javax.swing.JLabel();
         pnlLogin = new javax.swing.JPanel();
@@ -1573,8 +1577,6 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
 
         jLabel21.setText("Created by");
 
-        cmbRepEmp.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
-
         jLabel22.setText("From date:");
 
         txtRepFrom.setHorizontalAlignment(javax.swing.JTextField.CENTER);
@@ -1582,17 +1584,6 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         jLabel23.setText("to");
 
         txtRepTo.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-
-        chkRepInv.setText("has Invoice with EIK:");
-        chkRepInv.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                chkRepInvActionPerformed(evt);
-            }
-        });
-
-        txtRepEIK.setHorizontalAlignment(javax.swing.JTextField.CENTER);
-        txtRepEIK.setText("*");
-        txtRepEIK.setEnabled(false);
 
         bntRepGet.setFont(new java.awt.Font("Tahoma", 0, 18)); // NOI18N
         bntRepGet.setText("Generate");
@@ -1613,10 +1604,6 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
                     .addGroup(pnlReportsLayout.createSequentialGroup()
                         .addGap(147, 147, 147)
                         .addGroup(pnlReportsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(pnlReportsLayout.createSequentialGroup()
-                                .addComponent(chkRepInv)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(txtRepEIK, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(pnlReportsLayout.createSequentialGroup()
                                 .addComponent(jLabel22)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -1658,11 +1645,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
                     .addComponent(txtRepFrom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel23)
                     .addComponent(txtRepTo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
-                .addGroup(pnlReportsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(chkRepInv)
-                    .addComponent(txtRepEIK, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(45, 45, 45)
                 .addComponent(bntRepGet, javax.swing.GroupLayout.PREFERRED_SIZE, 57, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(182, Short.MAX_VALUE))
         );
@@ -1883,10 +1866,6 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
         setEnabledPanel(pnlInvoice, chkInvoice.isSelected());
         cmbInvCname.setSelectedIndex(0);
     }//GEN-LAST:event_chkInvoiceActionPerformed
-
-    private void chkRepInvActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_chkRepInvActionPerformed
-        txtRepEIK.setEnabled(chkRepInv.isSelected());
-    }//GEN-LAST:event_chkRepInvActionPerformed
 
     private void mnuSaveLogActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_mnuSaveLogActionPerformed
         //TODO add code
@@ -2393,27 +2372,96 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
 
     private void cmbRepShopActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cmbRepShopActionPerformed
         int selected = cmbRepShop.getSelectedIndex();
+        cmbRepEmp.removeAllItems();
         cmbRepEmp.addItem("All");
-
+        if (selected == 0) {
+            for (Employee e : employees) {
+                cmbRepEmp.addItem(e.employeeId + " - " + e.firstname + " " + e.lastname);
+            }
+        } else {
+            selected -= 1;
+            int shopId = shops.get(selected).shopId;
+            for (Employee e : employees) {
+                if (e.shopId == shopId)
+                    cmbRepEmp.addItem(e.employeeId + " - " + e.firstname + " " + e.lastname);
+            }
+        }
     }//GEN-LAST:event_cmbRepShopActionPerformed
 
+    
+    
     private void bntRepGetActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bntRepGetActionPerformed
         try {
-            Report rep = new Report(DBconnection, null);
-            ArrayList <String> res;
-            res = rep.WriteReportReceipts(me, new Date(1999,0, 0),new Date(2200,0, 0));
+            Date from = null;
+            Date to = null;
+            SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy");
+            String[] headers = new String[4];
+            headers[0] = "Report";
             
-            for (String s: res){
-                System.out.println(res);
+            String txtFrom = txtRepFrom.getText();
+            String txtTo = txtRepTo.getText();
+            
+            if (txtFrom.equals("*"))
+                from = format.parse("01/01/1900");
+            else
+                from = format.parse(txtFrom);
+            if (txtTo.equals("*"))
+                to = format.parse("01/01/2100");
+            else
+                to = format.parse(txtTo);
+            
+            headers[3] = "from " + txtFrom + " to " + txtTo;
+            
+            if (to.before(from)){
+                System.out.println("'from' date must be 'before' to date");
+            } else {
+                int selectedEmp = cmbRepEmp.getSelectedIndex();
+                int selectedShop = cmbRepShop.getSelectedIndex();
+                if (selectedEmp != 0){
+                    Employee emp = null;
+                    //get sleceted employee id - first number in combobox items
+                    int empId = Integer.valueOf(
+                            String.valueOf(cmbRepEmp.getSelectedItem())
+                            .split("\\s+")[0]);
+                    
+                    for(Employee tmpEmp: employees){
+                        if(tmpEmp.employeeId == empId){
+                            emp = tmpEmp;
+                            break;
+                        }
+                    }
+                    headers[1] = "for receipts created by employee #" + emp.employeeId;
+                    headers[2] = emp.firstname + " " + emp.lastname;
+                    
+                    debugString(headers);
+                    //call emp, receipt
+                }
+                else if (selectedShop != 0){
+                    Shop shop = shops.get(selectedShop-1);
+                    headers[1] = "for receipts created in shop #" + shop.shopId;
+                    headers[2] = shop.shopName;
+                    
+                    debugString(headers);
+                    //call shop, receipt
+                }
+                else {
+                    headers[1] = "for total revenue";
+                    headers[2] = " ";
+                    debugString(headers);
+                }
             }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
+            
         } catch (ParseException ex) {
-            ex.printStackTrace();
+            System.out.println("Invalide date eneterd. Please use the format 'dd/MM/yyyy'. To select all dates enter *");
         }
+ 
     }//GEN-LAST:event_bntRepGetActionPerformed
 
-    
+    private void debugString(String[] str){
+        for (String s: str){
+            System.err.println(s);
+        }
+    }
     
     //<editor-fold defaultstate="collapsed" desc="autogenreated variables">
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -2436,7 +2484,6 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     private javax.swing.JButton btnShopNew;
     private javax.swing.JButton btnShopUpdate;
     private javax.swing.JCheckBox chkInvoice;
-    private javax.swing.JCheckBox chkRepInv;
     private javax.swing.JComboBox<String> cmbEmpRank;
     private javax.swing.JComboBox<String> cmbEmpShop;
     private javax.swing.JComboBox<String> cmbInvCname;
@@ -2536,7 +2583,6 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     private javax.swing.JTextField txtProdId;
     private javax.swing.JTextField txtProdName;
     private javax.swing.JTextField txtProdPrice;
-    private javax.swing.JTextField txtRepEIK;
     private javax.swing.JTextField txtRepFrom;
     private javax.swing.JTextField txtRepTo;
     private javax.swing.JTextField txtShopAdress;
@@ -2545,8 +2591,7 @@ public class ShopForm extends javax.swing.JFrame implements Runnable {
     private javax.swing.JTextField txtUser;
     // End of variables declaration//GEN-END:variables
 
-    private void pnlReportsExit() {
-    }
+
     //</editor-fold>
 
 

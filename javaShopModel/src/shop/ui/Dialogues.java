@@ -158,6 +158,10 @@ public class Dialogues {
         JOptionPane.showMessageDialog(null, sp, "Invoice", JOptionPane.INFORMATION_MESSAGE);
     }
     
+    public static void showReport(String[] headers, String text){
+    
+    }
+    
     /**
      * formats an array of strings to be centered according to a desired
      * maximum width of a line
