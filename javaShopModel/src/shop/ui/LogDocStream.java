@@ -1,7 +1,6 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Kalin Stoyanov, Lyuboslav Angelov 2019
+ * Licensed under MIT license. See LICENSE for full text
  */
 package shop.ui;
 
@@ -24,6 +23,7 @@ public class LogDocStream extends OutputStream{
     
     private Document logDoc;
     private DateTimeFormatter timeFormat;
+    private final String lineBreak = System.lineSeparator();
     
     
     /**
@@ -44,8 +44,8 @@ public class LogDocStream extends OutputStream{
         //make timestamp
         String timestamp = LocalTime.now().format(timeFormat);
         String msgS = new String(b, off, len);
-        if (!"\n".equals(msgS)){
-            msgS = msgS.replaceAll("\n", "");
+        if (!lineBreak.equals(msgS)){
+            msgS = msgS.replaceAll(lineBreak, "");
 
             String message = String.format("<%s> %s\n", timestamp, msgS); //%s - Thread.currentThread().getName(),
 
@@ -71,7 +71,8 @@ public class LogDocStream extends OutputStream{
                 @Override
                 public void run(){
                     try {
-                        logDoc.insertString(docOffset, String.valueOf((char)b), null);
+                        if (lineBreak.charAt(0) != ((char)b))
+                            logDoc.insertString(docOffset, String.valueOf((char)b), null);
                     } catch (BadLocationException ex) {
                         System.out.println(ex.getMessage()); //ex.printStackTrace(); 
                     }

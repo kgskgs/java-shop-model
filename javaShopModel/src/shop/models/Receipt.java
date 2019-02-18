@@ -1,7 +1,6 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Kalin Stoyanov, Lyuboslav Angelov 2019
+ * Licensed under MIT license. See LICENSE for full text
  */
 package shop.models;
 import shop.infrastructure.interfaces.*;
